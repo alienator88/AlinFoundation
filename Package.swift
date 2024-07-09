@@ -5,19 +5,18 @@ import PackageDescription
 
 let package = Package(
     name: "AlinFoundation",
+    platforms: [.macOS(.v13)],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "AlinFoundation",
             targets: ["AlinFoundation"]),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "AlinFoundation"),
-        .testTarget(
-            name: "AlinFoundationTests",
-            dependencies: ["AlinFoundation"]),
+            name: "AlinFoundation",
+            dependencies: ["GitHubUpdater"]),
+        .target(
+            name: "GitHubUpdater",
+            dependencies: []),
     ]
 )

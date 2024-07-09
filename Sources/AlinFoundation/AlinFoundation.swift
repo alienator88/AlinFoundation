@@ -1,2 +1,9 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
+//
+//  AlinFoundation.swift
+//
+//
+//  Created by Alin Lupascu on 7/8/24.
+//
+
+import Foundation
+
