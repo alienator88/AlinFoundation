@@ -11,6 +11,7 @@ import Combine
 class UpdaterService: ObservableObject {
     @Published var releases: [Release] = []
     @Published var updateAvailable: Bool = false
+    @Published var showSheet: Bool = false
     @Published var progressBar: (String, Double) = ("", 0.0)
 
     private let owner: String
@@ -21,7 +22,7 @@ class UpdaterService: ObservableObject {
         self.repo = repo
     }
 
-    func loadGithubReleases() {
+    func loadGithubReleases(showSheet: Bool) {
         let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
         let request = URLRequest(url: url)
 
@@ -31,16 +32,17 @@ class UpdaterService: ObservableObject {
             if let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) {
                 DispatchQueue.main.async {
                     self.releases = Array(decodedResponse.prefix(3))
-                    self.checkForUpdate()
+                    self.checkForUpdate(showSheet: showSheet)
                 }
             }
         }.resume()
     }
 
-    private func checkForUpdate() {
+    private func checkForUpdate(showSheet: Bool) {
         guard let latestRelease = releases.first else { return }
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
         updateAvailable = latestRelease.tag_name > currentVersion
+        self.showSheet = showSheet
     }
 
     func downloadUpdate() {

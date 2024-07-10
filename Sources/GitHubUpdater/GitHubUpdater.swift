@@ -11,6 +11,7 @@ import Combine
 
 public class GitHubUpdater: ObservableObject {
     @Published public var updateAvailable: Bool = false
+    @Published public var showSheet: Bool = false
     @Published public var releases: [Release] = []
     @Published public var progressBar: (String, Double) = ("", 0.0)
     @Published public var nextUpdateDate: Date {
@@ -55,13 +56,17 @@ public class GitHubUpdater: ObservableObject {
             .assign(to: \.updateAvailable, on: self)
             .store(in: &cancellables)
 
+        updaterService.$showSheet
+            .assign(to: \.showSheet, on: self)
+            .store(in: &cancellables)
+
         updaterService.$progressBar
             .assign(to: \.progressBar, on: self)
             .store(in: &cancellables)
     }
 
-    public func checkForUpdates() {
-        updaterService.loadGithubReleases()
+    public func checkForUpdates(showSheet: Bool = true) {
+        updaterService.loadGithubReleases(showSheet: showSheet)
     }
 
     public func downloadUpdate() {

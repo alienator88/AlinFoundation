@@ -189,6 +189,7 @@ public struct UpdateButton: View {
                 Text(updater.updateAvailable ? "Update Available" : "No Updates")
                     .font(.callout)
                     .opacity(0.5)
+                    .shadow(radius: 2)
                     .onTapGesture {
                         showUpdateView = true
                     }
@@ -196,7 +197,7 @@ public struct UpdateButton: View {
         }
         .padding()
         .onAppear {
-            updater.checkForUpdates()
+            updater.checkForUpdates(showSheet: false)
         }
         .sheet(isPresented: $showUpdateView, content: {
             updater.getUpdateView()
