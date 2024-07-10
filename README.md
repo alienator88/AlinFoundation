@@ -15,9 +15,12 @@
 
 
 ## Screenshots
-Each usable component is separated with a white border
-![Screenshot 2024-07-10 at 1 42 29 PM](https://github.com/alienator88/AlinFoundation/assets/6263626/6d5900e0-78b6-43fb-bbf7-56405a1c672f)
-![Screenshot 2024-07-10 at 1 42 34 PM](https://github.com/alienator88/AlinFoundation/assets/6263626/dd4420c0-b0c6-4fc8-9617-1db25884ec40)
+Each usable component is separated with a border
+
+![Screenshot 2024-07-10 at 4 17 16 PM](https://github.com/alienator88/AlinFoundation/assets/6263626/e3eb6f4b-63d4-4846-ae13-e449b784e9b5)
+![Screenshot 2024-07-10 at 4 16 25 PM](https://github.com/alienator88/AlinFoundation/assets/6263626/350ce626-cf4e-474a-bc39-28d9c435c87b)
+![Screenshot 2024-07-10 at 4 16 08 PM](https://github.com/alienator88/AlinFoundation/assets/6263626/f5edfb9a-3ca8-449a-853d-1db841f3a829)
+
 
 
 
