@@ -1,6 +1,6 @@
 # AlinFoundation
 
-`AlinFoundation` is a Swift package that houses my most commonly used classes, functions, and utilities, optimized for macOS projects. It simplifies the setup of new projects by providing foundational components, including a custom ColorPicker and a GitHub Updater.
+`AlinFoundation` is a Swift package that houses my most commonly used classes, functions, and utilities, optimized for macOS projects. It simplifies the setup of new projects by providing foundational components, including a custom ColorPicker, GitHub Updater and PermissionsManager.
 
 ## Features
 

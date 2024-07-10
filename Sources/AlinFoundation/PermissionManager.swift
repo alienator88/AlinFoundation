@@ -149,7 +149,7 @@ public struct PermissionsView: View {
         if showNotification {
             notificationView
                 .sheet(isPresented: $showPermissionList) {
-                    permissionsListView
+                    PermissionsListView(isPresented: $showPermissionList, results: results)
                 }
         }
     }
@@ -166,7 +166,16 @@ public struct PermissionsView: View {
             Button(action: {
                 showPermissionList = true
             }) {
-                labelContent
+                HStack(alignment: .center) {
+                    Image(systemName: !hovered ? "lock" : "lock.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 14, height: 14)
+                        .foregroundStyle(.white)
+                    Text("Check")
+                        .foregroundStyle(.white)
+                }
+                .padding(3)
             }
             .buttonStyle(PlainButtonStyle())
             .padding(4)
@@ -187,20 +196,15 @@ public struct PermissionsView: View {
         .padding(.bottom)
     }
 
-    private var labelContent: some View {
-        HStack(alignment: .center) {
-            Image(systemName: !hovered ? "lock" : "lock.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 14, height: 14)
-                .foregroundStyle(.white)
-            Text("Check")
-                .foregroundStyle(.white)
-        }
-        .padding(3)
-    }
 
-    private var permissionsListView: some View {
+}
+
+struct PermissionsListView: View {
+    @Environment(\.dismiss) var dismiss
+    @Binding var isPresented: Bool
+    let results: PermissionManager.PermissionsCheckResults
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Spacer()
@@ -226,7 +230,7 @@ public struct PermissionsView: View {
                         openSettingsForPermission(permission)
                     }
                     .buttonStyle(.plain)
-//                    .controlSize(.small)
+                    //                    .controlSize(.small)
                 }
                 .padding(5)
             }
