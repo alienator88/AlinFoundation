@@ -83,15 +83,10 @@ public struct ColorPickerSliderView: View {
             VStack(spacing: 5) {
                 // Hex code input
                 HStack {
-                    Button() {
+                    Button("") {
                         copyToClipboard(hexCode)
-                    } label: {
-                        Image(systemName: "list.clipboard")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 18, height: 18)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SimpleButtonStyle(icon: "list.clipboard", help: "Copy", size: 18))
 
                     Spacer()
 
@@ -111,15 +106,10 @@ public struct ColorPickerSliderView: View {
 
                     Spacer()
 
-                    Button() {
+                    Button("") {
                         dismiss()
-                    } label: {
-                        Image(systemName: "x.circle")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 18, height: 18)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SimpleButtonStyle(icon: "x.circle", help: "Close", size: 18))
                 }
 
                 HStack {

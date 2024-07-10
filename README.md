@@ -5,12 +5,14 @@
 ## Features
 
 - **GitHubUpdater**: Allows seamless updates by checking the latest available versions from a specified GitHub repository.
-- **AlinFoundation**: Provides commonly used utilities. See below for what it has available
-- **Component Based**: You can import the updater or foundation individually if you don't need all
+- **ColorPicker**: Minimalistic color picker that follows macOS interface guidelines
+- **Authorization**: Execute a sudo shell command, asking for permission from end-user
+- **PermissionsManager**: Check for permissions and show a view to manage these (Currently supports FDA, Accessibility, Automation)
+- **Utilities**: A multitude of functions and extensions
+- **Styles**: Some custom views, buttonStyles, etc.
+- **ThemeManager**: TO-DO
 
-## AlinFoundation
-- Minimalistic color picker that follows macOS interface guidelines
-- More coming soon
+
 
 ## Screenshots
 Each usable component is separated with a white border
@@ -38,7 +40,6 @@ To use AlinFoundation in your Swift project, you need to import it along with ot
 ```swift
 import SwiftUI
 import AppKit
-import GitHubUpdater // Make sure this package is correctly setup if it's external
 import AlinFoundation
 ```
 
@@ -50,7 +51,7 @@ import AlinFoundation
 struct FoundationTestingApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AFstate()
-    @StateObject private var updater = GitHubUpdater(owner: "alienator88", repo: "Viz")
+    @StateObject private var updater = GitHubUpdater(owner: "USERNAME", repo: "REPO")
 
     var body: some Scene {
         WindowGroup {
@@ -58,8 +59,11 @@ struct FoundationTestingApp: App {
                 .environmentObject(updater)
                 .environmentObject(appState)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(appState.themeColor)
+                .background(
+                    appState.themeColor
+                )
         }
+        .windowStyle(.hiddenTitleBar)
     }
 }
 
@@ -73,13 +77,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 ### ContentView.swift
 ```swift
 import SwiftUI
-import GitHubUpdater
 import AlinFoundation
 
 struct ContentView: View {
     @EnvironmentObject var updater: GitHubUpdater
     @EnvironmentObject var appState: AFstate
     @Environment(\.colorScheme) var colorScheme
+    @State private var showNotification: Bool = false
+    @State private var permissionResults: PermissionManager.PermissionsCheckResults?
 
     var body: some View {
         let slate = colorScheme == .light ? Color(.sRGB, red: 0.499549, green: 0.545169, blue: 0.682028, opacity: 1) : Color(.sRGB, red: 0.188143, green: 0.208556, blue: 0.262679, opacity: 1)
@@ -89,23 +94,49 @@ struct ContentView: View {
 
         VStack {
 
-            /// This view shows a minimalistic color picker. You can provide an optinal array of Colors to show on the picker popover, else a default set will show
+            /// This shows a permission notification view if permissions are missing
+            if let results = permissionResults {
+                PermissionsView(showNotification: $showNotification, results: results)
+            }
+
+            /// This shows a minimalistic color picker
             ColorButtonView(appState: appState, templateColors: [slate, solarized, dracula, macOS])
 
-            /// This view will check for an update on appear and show if there's one available or not in the label. This does not trigger the Update sheet automatically, you have to click Update button
+            /// This will check for an update on appear of the button and show if there's one available or not in the label
             updater.getUpdateButton()
                 .controlSize(.extraLarge)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(lineWidth: 1)
+                }
 
-            /// This view will show the last 3 recent versions release notes
+            /// This will show the last 3 versions release notes
             updater.getReleasesView()
                 .frame(width: 400, height: 300)
+                .padding()
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(lineWidth: 1)
+                }
 
-            /// This view will allow the user to set how often to check for updates using the function updater.checkAndUpdateIfNeeded()
+            /// This will allow the user to set how often to check for updates
             updater.getFrequencyView()
+                .padding()
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(lineWidth: 1)
+                }
         }
+        .padding()
         .onAppear {
-            /// This will check for updates on appear based on the user configurable update frequency
+            /// This will check for updates on load based on the update frequency
             updater.checkAndUpdateIfNeeded()
+
+            /// Check permissions on load
+            PermissionManager.checkPermissions(types: [.fullDiskAccess, .accessibility]) { results in
+                self.permissionResults = results
+                self.showNotification = !results.allCheckedPermissionsGranted
+            }
         }
         .sheet(isPresented: $updater.showSheet, content: {
             /// This will show the update sheet based on the frequency check function only

@@ -14,9 +14,6 @@ let package = Package(
     targets: [
         .target(
             name: "AlinFoundation",
-            dependencies: ["GitHubUpdater"]),
-        .target(
-            name: "GitHubUpdater",
             dependencies: []),
     ]
 )
