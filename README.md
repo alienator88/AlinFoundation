@@ -12,6 +12,13 @@
 - Minimalistic color picker that follows macOS interface guidelines
 - More coming soon
 
+## Screenshots
+Each usable component is separated with a white border
+![Screenshot 2024-07-10 at 1 42 29 PM](https://github.com/alienator88/AlinFoundation/assets/6263626/6d5900e0-78b6-43fb-bbf7-56405a1c672f)
+![Screenshot 2024-07-10 at 1 42 34 PM](https://github.com/alienator88/AlinFoundation/assets/6263626/dd4420c0-b0c6-4fc8-9617-1db25884ec40)
+
+
+
 ## Installation
 
 To integrate `AlinFoundation` into your Swift project, configure your `Package.swift` to include the following dependency:
