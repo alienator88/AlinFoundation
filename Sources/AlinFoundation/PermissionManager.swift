@@ -151,7 +151,6 @@ public struct PermissionsView: View {
                 .sheet(isPresented: $showPermissionList) {
                     permissionsListView
                 }
-                .interactiveDismissDisabled(false)
         }
     }
 
