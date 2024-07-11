@@ -10,9 +10,10 @@ import SwiftUI
 
 
 public struct ColorButtonView: View {
-    @ObservedObject var appState: AFstate
+//    @ObservedObject var appState: AFstate
+    @ObservedObject var themeManager: ThemeManager
     @State private var showPopover = false
-    @State private var hexCode: String = "#5babe8"
+//    @State private var hexCode: String = ""
     var templateColors: [Color]?
 
     private let defaultColors: [Color] = [
@@ -25,8 +26,8 @@ public struct ColorButtonView: View {
         Color(.sRGB, red: 0.36, green: 0.67, blue: 0.91, opacity: 1)  // Baby Blue
     ]
 
-    public init(appState: AFstate, templateColors: [Color]? = nil) {
-        self.appState = appState
+    public init(themeManager: ThemeManager, templateColors: [Color]? = nil) {
+        self.themeManager = themeManager
         self.templateColors = templateColors
     }
 
@@ -34,21 +35,22 @@ public struct ColorButtonView: View {
         let colors = templateColors ?? defaultColors
 
         Button(action: {
+//            hexCode = themeManager.pickerColor.toHex()
             showPopover = true
         }) {
             Rectangle()
-                .fill(appState.themeColor)
-                .frame(width: 85, height: 30)
+                .fill(themeManager.pickerColor)
+                .frame(width: 85, height: 20)
                 .cornerRadius(5)
                 .overlay(
                     ZStack {
                         RoundedRectangle(cornerRadius: 5)
                             .strokeBorder(lineWidth: 1)
-                            .foregroundStyle(appState.themeColor.luminance())
+                            .foregroundStyle(themeManager.pickerColor.luminance())
                             .opacity(0.3)
                             .shadow(radius: 2)
-                        Text(hexCode)
-                            .foregroundStyle(appState.themeColor.luminance())
+                        Text(themeManager.hexCode)
+                            .foregroundStyle(themeManager.pickerColor.luminance())
                             .font(.callout)
                     }
 
@@ -57,21 +59,32 @@ public struct ColorButtonView: View {
         }
         .buttonStyle(.plain)
         .popover(isPresented: $showPopover) {
-            ColorPickerSliderView(appState: appState, hexCode: $hexCode, templateColors: .constant(colors))
+            ColorPickerSliderView(themeManager: themeManager, templateColors: .constant(colors))
         }
+        .onAppear(perform: updateHexCode)
+        .onChange(of: themeManager.pickerColor) { _ in
+            updateHexCode()
+        }
+    }
+    
+    private func updateHexCode() {
+        themeManager.hexCode = themeManager.pickerColor.toHex() ?? "#FFFFFF"
     }
 }
 
 
 public struct ColorPickerSliderView: View {
-    @ObservedObject var appState: AFstate
-    @Binding var hexCode: String
+    @ObservedObject var themeManager: ThemeManager
+//    @Binding var hexCode: String
     @Binding var templateColors: [Color]
     @Environment(\.dismiss) var dismiss
+    @State private var red: Double = 0
+    @State private var green: Double = 0
+    @State private var blue: Double = 0
 
-    public init(appState: AFstate, hexCode: Binding<String>, templateColors: Binding<[Color]>) {
-        self.appState = appState
-        self._hexCode = hexCode
+    public init(themeManager: ThemeManager, templateColors: Binding<[Color]>) {
+        self.themeManager = themeManager
+//        self._hexCode = hexCode
         self._templateColors = templateColors
     }
 
@@ -84,25 +97,27 @@ public struct ColorPickerSliderView: View {
                 // Hex code input
                 HStack {
                     Button("") {
-                        copyToClipboard(hexCode)
+                        copyToClipboard(themeManager.hexCode)
                     }
                     .buttonStyle(SimpleButtonStyle(icon: "list.clipboard", help: "Copy", size: 18))
 
                     Spacer()
 
-                    TextField("Enter hex code", text: $hexCode)
+                    TextField("Enter hex code", text: $themeManager.hexCode)
                         .textFieldStyle(.plain)
                         .padding(5)
-                        .onChange(of: hexCode) { newVal in
-                            if !newVal.starts(with: "#") {
-                                hexCode = "#" + newVal
+                        .onChange(of: themeManager.hexCode) { newVal in
+                            // Only update if the new value is different
+                            let validHex = processHexCode(newVal)
+                            if themeManager.hexCode != validHex {
+                                themeManager.hexCode = validHex
                             }
-                            if newVal.count > 7 {
-                                hexCode = String(newVal.prefix(7))
+                            if validHex.count == 7 {
+                                updateRGBValues(from: Color(hex: themeManager.hexCode) ?? Color.white)
                             }
-                            updateRGBValues(from: hexCode)
+
                         }
-                        .frame(width: 65)
+                        .frame(width: 70)
 
                     Spacer()
 
@@ -112,11 +127,11 @@ public struct ColorPickerSliderView: View {
                     .buttonStyle(SimpleButtonStyle(icon: "x.circle", help: "Close", size: 18))
                 }
 
-                HStack {
-                    Spacer()
-                    Text("Supports 6 character hex code").font(.footnote).opacity(0.5)
-                    Spacer()
-                }
+//                HStack {
+//                    Spacer()
+//                    Text("Supports 6 character hex code").font(.footnote).opacity(0.5)
+//                    Spacer()
+//                }
             }
             .frame(maxWidth: .infinity)
             .edgesIgnoringSafeArea(.all)
@@ -127,82 +142,97 @@ public struct ColorPickerSliderView: View {
             VStack(spacing: 15) {
                 // Red slider
                 HStack {
-                    Text("R").font(.footnote).opacity(0.5)
+                    Text("R").font(.footnote).opacity(0.5).frame(width: 25)
                     ZStack {
-                        LinearGradient(gradient: Gradient(colors: [Color(.sRGB, red: 0, green: appState.green, blue: appState.blue, opacity: 1), Color(.sRGB, red: 1, green: appState.green, blue: appState.blue, opacity: 1)]), startPoint: .leading, endPoint: .trailing)
+                        LinearGradient(gradient: Gradient(colors: [Color(.sRGB, red: 0, green: green, blue: blue, opacity: 1), Color(.sRGB, red: 1, green: green, blue: blue, opacity: 1)]), startPoint: .leading, endPoint: .trailing)
                             .frame(height: 6)
                             .cornerRadius(10)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .strokeBorder(lineWidth: 0.8)
+                                    .opacity(0.5)
+                            }
 
-                        Slider(value: $appState.red, in: 0...1)
+
+                        Slider(value: $red, in: 0...1)
                             .opacity(0.0)
-                            .background(ThumbView(value: $appState.red, range: 0...1))
-                            .onChange(of: appState.red) { newVal in
-                                updateHexCode()
+                            .background(ThumbView(value: $red, range: 0...1))
+                            .onChange(of: red) { newVal in
+                                updatePickerColor()
                             }
                     }
                     .shadow(radius: 1)
 
-                    Text(String(format: "%.2f", appState.red)).font(.footnote).opacity(0.5)
+                    Text(String(format: "%d", Int(red * 255))).font(.footnote).opacity(0.5).frame(width: 25)
                 }
 
 
                 // Green slider
                 HStack {
-                    Text("G").font(.footnote).opacity(0.5)
+                    Text("G").font(.footnote).opacity(0.5).frame(width: 25)
                     ZStack {
-                        LinearGradient(gradient: Gradient(colors: [Color(.sRGB, red: appState.red, green: 0, blue: appState.blue, opacity: 1), Color(.sRGB, red: appState.red, green: 1, blue: appState.blue, opacity: 1)]), startPoint: .leading, endPoint: .trailing)
+                        LinearGradient(gradient: Gradient(colors: [Color(.sRGB, red: red, green: 0, blue: blue, opacity: 1), Color(.sRGB, red: red, green: 1, blue: blue, opacity: 1)]), startPoint: .leading, endPoint: .trailing)
                             .frame(height: 6)
                             .cornerRadius(10)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .strokeBorder(lineWidth: 0.8)
+                                    .opacity(0.5)
+                            }
 
-                        Slider(value: $appState.green, in: 0...1)
+                        Slider(value: $green, in: 0...1)
                             .opacity(0.0)
-                            .background(ThumbView(value: $appState.green, range: 0...1))
-                            .onChange(of: appState.green) { newVal in
-                                updateHexCode()
+                            .background(ThumbView(value: $green, range: 0...1))
+                            .onChange(of: green) { newVal in
+                                updatePickerColor()
                             }
                     }
                     .shadow(radius: 1)
 
-                    Text(String(format: "%.2f", appState.green)).font(.footnote).opacity(0.5)
+                    Text(String(format: "%d", Int(green * 255))).font(.footnote).opacity(0.5).frame(width: 25)
                 }
 
 
                 // Blue slider
                 HStack {
-                    Text("B").font(.footnote).opacity(0.5)
+                    Text("B").font(.footnote).opacity(0.5).frame(width: 25)
                     ZStack {
-                        LinearGradient(gradient: Gradient(colors: [Color(.sRGB, red: appState.red, green: appState.green, blue: 0, opacity: 1), Color(.sRGB, red: appState.red, green: appState.green, blue: 1, opacity: 1)]), startPoint: .leading, endPoint: .trailing)
+                        LinearGradient(gradient: Gradient(colors: [Color(.sRGB, red: red, green: green, blue: 0, opacity: 1), Color(.sRGB, red: red, green: green, blue: 1, opacity: 1)]), startPoint: .leading, endPoint: .trailing)
                             .frame(height: 6)
                             .cornerRadius(10)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .strokeBorder(lineWidth: 0.8)
+                                    .opacity(0.5)
+                            }
 
-                        Slider(value: $appState.blue, in: 0...1)
+                        Slider(value: $blue, in: 0...1)
                             .opacity(0.0)
-                            .background(ThumbView(value: $appState.blue, range: 0...1))
-                            .onChange(of: appState.blue) { newVal in
-                                updateHexCode()
+                            .background(ThumbView(value: $blue, range: 0...1))
+                            .onChange(of: blue) { newVal in
+                                updatePickerColor()
                             }
                     }
                     .shadow(radius: 1)
 
-                    Text(String(format: "%.2f", appState.blue)).font(.footnote).opacity(0.5)
+                    Text(String(format: "%d", Int(blue * 255))).font(.footnote).opacity(0.5).frame(width: 25)
                 }
 
 
                 // Color selection
-                HStack {
+                HStack(spacing: 20) {
                     ForEach(templateColors, id: \.self) { color in
                         Rectangle()
                             .fill(color)
                             .frame(width: 20, height: 20)
-                            .cornerRadius(4)
+                            .cornerRadius(3)
                             .onTapGesture {
                                 setColorFrom(color: color)
                             }
                             .overlay(
-                                RoundedRectangle(cornerRadius: 5)
+                                RoundedRectangle(cornerRadius: 3)
                                     .strokeBorder(lineWidth: 1)
-                                    .opacity(0.3)
-                                    .shadow(radius: 2)
+                                    .opacity(0.5)
                             )
                     }
                 }
@@ -211,31 +241,58 @@ public struct ColorPickerSliderView: View {
             .padding([.horizontal, .bottom], 15)
 
         }
+        .frame(minWidth: 250)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            updateRGBValues(from: hexCode)
+            updateRGBValues(from: themeManager.pickerColor)
         }
     }
 
-    public func updateRGBValues(from hex: String) {
-        let sanitizedHex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        if sanitizedHex.count == 6, let intCode = Int(sanitizedHex, radix: 16) {
-            appState.red = Double((intCode >> 16) & 0xFF) / 255.0
-            appState.green = Double((intCode >> 8) & 0xFF) / 255.0
-            appState.blue = Double(intCode & 0xFF) / 255.0
+    private func processHexCode(_ hex: String) -> String {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !hexSanitized.starts(with: "#") {
+            hexSanitized = "#" + hexSanitized
+        }
+        if hexSanitized.count > 7 {
+            hexSanitized = String(hexSanitized.prefix(7))
+        }
+        return hexSanitized
+    }
+
+    private func updateRGBValues(from color: Color) {
+        let components = NSColor(color).cgColor.components ?? []
+        red = components.count > 0 ? Double(components[0]) : 0
+        green = components.count > 1 ? Double(components[1]) : 0
+        blue = components.count > 2 ? Double(components[2]) : 0
+        updatePickerColor()
+    }
+
+    public func updateRGBValuesHex(from hex: String) {
+        if let color = Color(hex: hex) {
+            let components = NSColor(color).cgColor.components ?? []
+            red = components.count > 0 ? Double(components[0]) : 0
+            green = components.count > 1 ? Double(components[1]) : 0
+            blue = components.count > 2 ? Double(components[2]) : 0
+            updatePickerColor()
         }
     }
 
-    public func updateHexCode() {
-        hexCode = String(format: "#%02x%02x%02x", Int(appState.red * 255), Int(appState.green * 255), Int(appState.blue * 255))
+    public func updatePickerColor() {
+        themeManager.pickerColor = Color(.sRGB, red: red, green: green, blue: blue, opacity: 1)
+        themeManager.pickerColor.luminanceDisplayMode()
+//        hexCode = themeManager.pickerColor.toHex() ?? "#FFFFFF"
     }
+
+//    public func updateHexCode() {
+//        hexCode = String(format: "#%02x%02x%02x", Int(red * 255), Int(green * 255), Int(blue * 255))
+//    }
 
     public func setColorFrom(color: Color) {
         if let components = color.cgColor?.components, components.count >= 3 {
-            appState.red = components[0]
-            appState.green = components[1]
-            appState.blue = components[2]
-            updateHexCode()
+            red = components[0]
+            green = components[1]
+            blue = components[2]
+            updatePickerColor()
         }
     }
 
@@ -268,28 +325,5 @@ public struct ThumbView: View {
                     }
                 )
         }
-    }
-}
-
-
-
-public func copyToClipboard(_ text: String) {
-    let pasteboard = NSPasteboard.general
-    pasteboard.clearContents()
-    pasteboard.setString(text, forType: .string)
-}
-
-public extension Color {
-    func luminance() -> Color {
-        let components = self.cgColor?.components
-        let red = components?[0] ?? 0
-        let green = components?[1] ?? 0
-        let blue = components?[2] ?? 0
-
-        // Calculate the relative luminance
-        let luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
-
-        // Use a threshold to determine if the color is bright or dark
-        return luminance > 0.65 ? Color.black : Color.white
     }
 }

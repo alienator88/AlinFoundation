@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 // Buton style with a multitude of customization choices
-struct SimpleButtonStyle: ButtonStyle {
+public struct SimpleButtonStyle: ButtonStyle {
     @State private var hovered = false
     let icon: String
     let iconFlip: String
@@ -31,7 +31,7 @@ struct SimpleButtonStyle: ButtonStyle {
         self.rotate = rotate
     }
 
-    func makeBody(configuration: Self.Configuration) -> some View {
+    public func makeBody(configuration: Self.Configuration) -> some View {
         HStack(alignment: .center) {
             Image(systemName: (hovered && !iconFlip.isEmpty) ? iconFlip : icon)
                 .resizable()
@@ -57,7 +57,7 @@ struct SimpleButtonStyle: ButtonStyle {
 }
 
 // Info button that takes some text as input and shows a popover on click
-struct InfoButton: View {
+public struct InfoButton: View {
     @State private var isPopoverPresented: Bool = false
     let text: String
     let color: Color
@@ -74,7 +74,7 @@ struct InfoButton: View {
 
     }
 
-    var body: some View {
+    public var body: some View {
         Button(action: {
             self.isPopoverPresented.toggle()
         }) {
@@ -118,8 +118,8 @@ struct InfoButton: View {
 
 
 // Rounded textfield style
-struct RoundedTextFieldStyle: TextFieldStyle {
-    func _body(configuration: TextField<Self._Label>) -> some View {
+public struct RoundedTextFieldStyle: TextFieldStyle {
+    public func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .padding(8)
             .cornerRadius(6)
@@ -132,17 +132,115 @@ struct RoundedTextFieldStyle: TextFieldStyle {
 }
 
 
+// Alert Badge Notifications
+struct AlertNotification: View {
+    var label: String
+    var icon: String
+    var buttonAction: () -> Void
+    var btnColor: Color
+    var opacity: Double
+    @ObservedObject var themeManager: ThemeManager
+    @State private var hovered = false
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.title3)
+                .foregroundStyle(themeManager.displayMode == .dark ? .white : .black)
+                .opacity(0.5)
+                .padding(.leading, 7)
+
+            Spacer()
+
+            Button(action: buttonAction) {
+                HStack(alignment: .center, spacing: 5) {
+                    Image(systemName: !hovered ? "\(icon)" : "\(icon).fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 14, height: 14)
+                        .foregroundStyle(.white)
+                    Text("Check")
+                        .foregroundStyle(.white)
+                }
+                .padding(3)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(4)
+            .background(btnColor)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .onHover { hover in
+                withAnimation {
+                    hovered = hover
+                }
+            }
+        }
+        .frame(height: 30)
+        .padding(5)
+        .background(themeManager.displayMode == .dark ? themeManager.pickerColor.adjustBrightness().opacity(opacity) : themeManager.pickerColor.adjustBrightness(lighten: true).opacity(opacity))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .padding()
+    }
+}
+
+
 // Used for testing UI bounds. This adds a border around any view
-extension View {
+public extension View {
     func bounds() -> some View {
         self.border(Color.red, width: 1)
     }
 }
 
+
+// View dimensions
+public struct LogViewDimensions: ViewModifier {
+    @State private var size: CGSize = .zero
+
+    public func body(content: Content) -> some View {
+        content
+            .background(GeometryReader { geometry in
+                Color.clear
+                    .onAppear {
+                        updateSize(geometry.size)
+                    }
+                    .onChange(of: geometry.size) { newSize in
+                        updateSize(newSize)
+                    }
+            })
+    }
+
+    private func updateSize(_ newSize: CGSize) {
+        if size != newSize {
+            size = newSize
+            print("View size changed: \(newSize)")
+        }
+    }
+}
+
+public extension View {
+    public func logDimensions() -> some View {
+        self.modifier(LogViewDimensions())
+    }
+}
+
+
 // Make a picker simple with no background
-extension View {
+public extension View {
     func minimalistPicker() -> some View {
         self.buttonStyle(.plain)
+    }
+}
+
+
+// Image modifier
+public struct CustomImage: View {
+    var systemName: String
+    var size: CGFloat
+
+    public var body: some View {
+        Image(systemName: systemName)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size)
     }
 }
 
@@ -179,18 +277,40 @@ public struct MaterialBackground: ViewModifier {
     }
 }
 
-extension View {
+public extension View {
     public func material(_ material: NSVisualEffectView.Material = .hudWindow) -> some View {
         self.modifier(MaterialBackground(material: material))
     }
 }
 
 
+// Transparent colored background
+struct BackgroundColorModifier: ViewModifier {
+    @ObservedObject var themeManager: ThemeManager
+    var brightness: Double
+    var opacity: Double
+
+    func body(content: Content) -> some View {
+        ZStack {
+            themeManager.pickerColor.adjustBrightness(brightness).opacity(opacity)
+                .material()
+            content
+        }
+    }
+}
+
+public extension View {
+    func materialColor(themeManager: ThemeManager, brightness: Double = 5, opacity: Double = 0.7) -> some View {
+        self.modifier(BackgroundColorModifier(themeManager: themeManager, brightness: brightness, opacity: opacity))
+    }
+}
+
+
 // Labeled Divider
-struct LabeledDivider: View {
+public struct LabeledDivider: View {
     let label: String
 
-    var body: some View {
+    public var body: some View {
         HStack(spacing: 0) {
             Rectangle()
                 .frame(height: 1)

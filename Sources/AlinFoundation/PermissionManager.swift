@@ -134,68 +134,32 @@ public struct PermissionManager {
 
 
 public struct PermissionsView: View {
+    @ObservedObject var themeManager = ThemeManager.shared
     @Binding public var showNotification: Bool
     @State private var hovered: Bool = false
     @State private var showPermissionList = false
     @Environment(\.dismiss) var dismiss
     let results: PermissionManager.PermissionsCheckResults
+    let dark: Bool
+    let opacity: Double
 
-    public init(showNotification: Binding<Bool>, results: PermissionManager.PermissionsCheckResults) {
+    public init(showNotification: Binding<Bool>, results: PermissionManager.PermissionsCheckResults, dark: Bool = false, opacity: Double = 1) {
         self._showNotification = showNotification
         self.results = results
+        self.dark = dark
+        self.opacity = opacity
     }
 
     public var body: some View {
         if showNotification {
-            notificationView
+            AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
+                showPermissionList = true
+            }, btnColor: Color.red, opacity: opacity, themeManager: themeManager)
                 .sheet(isPresented: $showPermissionList) {
                     PermissionsListView(isPresented: $showPermissionList, results: results)
                 }
         }
     }
-
-    private var notificationView: some View {
-        HStack {
-            Text("Missing Permissions!")
-                .font(.callout)
-                .opacity(0.5)
-                .padding(.leading, 7)
-
-            Spacer()
-
-            Button(action: {
-                showPermissionList = true
-            }) {
-                HStack(alignment: .center) {
-                    Image(systemName: !hovered ? "lock" : "lock.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 14, height: 14)
-                        .foregroundStyle(.white)
-                    Text("Check")
-                        .foregroundStyle(.white)
-                }
-                .padding(3)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .padding(4)
-            .background(Color.red)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .onHover { hover in
-                withAnimation {
-                    hovered = hover
-                }
-            }
-            .help("Check all permissions")
-        }
-        .frame(height: 30)
-        .padding(5)
-        .background(.primary.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .padding(.horizontal)
-        .padding(.bottom)
-    }
-
 
 }
 

@@ -419,7 +419,20 @@ public func formattedDate(_ date: Date = Date.now, dateStyle: DateFormatter.Styl
     return formatter.string(from: date)
 }
 
+// --- Copy to clipboard ---
+public func copyToClipboard(_ text: String) {
+    let pasteboard = NSPasteboard.general
+    pasteboard.clearContents()
+    pasteboard.setString(text, forType: .string)
+}
+
+
+
+
 //MARK: ====================================================== EXTENSIONS ======================================================
+
+
+
 
 // --- Bundle extension ---
 public extension Bundle {
@@ -519,3 +532,115 @@ public extension NSImage {
         return NSColor(red: CGFloat(bitmap[0]) / 255, green: CGFloat(bitmap[1]) / 255, blue: CGFloat(bitmap[2]) / 255, alpha: CGFloat(bitmap[3]) / 255)
     }
 }
+
+// Color extensions for theme manager
+public extension Color {
+    func adjustBrightness(_ percentage: CGFloat = 10.0, lighten: Bool = false) -> Color {
+        let light = Color(.sRGB, red: 1.0, green: 1.0, blue: 1.0, opacity: 1)
+        let dark  = Color(.sRGB, red: 0.149, green: 0.149, blue: 0.149, opacity: 1)
+        let isDarkMode = ThemeManager.shared.displayMode.colorScheme == .dark
+        let colorToModify: Color = self == .clear ? (isDarkMode ? dark : light) : self
+
+        var hsb = (hue: CGFloat(0), saturation: CGFloat(0), brightness: CGFloat(0), alpha: CGFloat(0))
+        NSColor(colorToModify).getHue(&hsb.hue, saturation: &hsb.saturation, brightness: &hsb.brightness, alpha: &hsb.alpha)
+
+        let newBrightness = lighten ? min(hsb.brightness + percentage / 100, 1.0) : max(hsb.brightness - percentage / 100, 0)
+
+        return Color(hue: hsb.hue, saturation: hsb.saturation, brightness: newBrightness, opacity: hsb.alpha)
+    }
+}
+
+
+// UserDefaults extension for theme manager
+public extension UserDefaults {
+    func color(forKey key: String) -> Color? {
+        guard let components = array(forKey: key) as? [CGFloat], components.count == 4 else {
+            return nil
+        }
+        return Color(.sRGB, red: components[0], green: components[1], blue: components[2], opacity: components[3])
+    }
+
+    func setColor(_ color: Color, forKey key: String) {
+        let nsColor = NSColor(color)
+        if let components = nsColor.cgColor.components, components.count == 4 {
+            set(components, forKey: key)
+        } else {
+            removeObject(forKey: key)
+        }
+    }
+}
+
+// Color extensions for ColorPicker
+public extension Color {
+    func toHex() -> String {
+        let uic = NSColor(self)
+        guard let components = uic.cgColor.components, components.count >= 3 else {
+            return "#FFFFFF"
+        }
+        let r = Float(components[0])
+        let g = Float(components[1])
+        let b = Float(components[2])
+        let hexString = String(format: "#%02lx%02lx%02lx", lroundf(r * 255), lroundf(g * 255), lroundf(b * 255))
+        return hexString
+    }
+}
+
+public extension Color {
+    init?(hex: String) {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
+
+        var rgb: UInt64 = 0
+
+        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else {
+            return nil
+        }
+
+        let r = Double((rgb & 0xFF0000) >> 16) / 255.0
+        let g = Double((rgb & 0x00FF00) >> 8) / 255.0
+        let b = Double(rgb & 0x0000FF) / 255.0
+
+        self.init(red: r, green: g, blue: b)
+    }
+}
+
+public extension Color {
+    func luminance() -> Color {
+        if self == .clear {
+            return Color.primary
+        }
+        let components = self.cgColor?.components
+        let red = components?[0] ?? 0
+        let green = components?[1] ?? 0
+        let blue = components?[2] ?? 0
+
+        // Calculate the relative luminance
+        let luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+        // Use a threshold to determine if the color is bright or dark
+        return luminance > 0.65 ? Color.black : Color.white
+    }
+}
+
+public extension Color {
+    func luminanceDisplayMode() {
+        let themeManager = ThemeManager.shared
+        let components = self.cgColor?.components
+        let red = components?[0] ?? 0
+        let green = components?[1] ?? 0
+        let blue = components?[2] ?? 0
+
+        // Calculate the relative luminance
+        let luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+        // Use a threshold to determine if the color is bright or dark
+        if luminance > 0.65 {
+            themeManager.displayMode = .light
+        } else {
+            themeManager.displayMode = .dark
+        }
+    }
+}
+
+
+

@@ -89,8 +89,8 @@ public class GitHubUpdater: ObservableObject {
         }
     }
 
-    public func getUpdateButton(showButton: Bool = true, showLabel: Bool = true, spacer: Bool = false) -> some View {
-        UpdateButton(updater: self, showButton: showButton, showLabel: showLabel, spacer: spacer)
+    public func getUpdateButton(dark: Bool = false, opacity: Double = 1) -> some View {
+        UpdateButton(updater: self, dark: dark, opacity: opacity)
     }
 
     public func getFrequencyView() -> some View {
@@ -111,6 +111,7 @@ public class GitHubUpdater: ObservableObject {
 
         let now = Date()
 
+//        if now <= nextUpdateDate { //MARK: Debugging
         if now >= nextUpdateDate {
             print("Updater: performing update check")
             self.checkForUpdates()

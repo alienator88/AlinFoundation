@@ -162,45 +162,30 @@ struct NoUpdateView: View {
 
 
 public struct UpdateButton: View {
+    @ObservedObject var themeManager = ThemeManager.shared
     @ObservedObject var updater: GitHubUpdater
     @State private var showUpdateView = false
-    @State var showButton: Bool
-    @State var showLabel: Bool
-    @State var spacer: Bool
+    @State private var hovered = false
+    var dark: Bool
+    var opacity: Double
 
-    public init(updater: GitHubUpdater, showButton: Bool = true, showLabel: Bool = true, spacer: Bool = false) {
+    public init(updater: GitHubUpdater, dark: Bool = false, opacity: Double = 1) {
         self.updater = updater
-        self.showButton = showButton
-        self.showLabel = showLabel
-        self.spacer = spacer
+        self.dark = dark
+        self.opacity = opacity
     }
 
     public var body: some View {
-        HStack {
-            if showButton {
-                Button("Update") {
-                    showUpdateView = true
-                }
-            }
-            if spacer {
-                Spacer()
-            }
-            if showLabel {
-                Text(updater.updateAvailable ? "Update Available" : "No Updates")
-                    .font(.callout)
-                    .opacity(0.5)
-                    .onTapGesture {
-                        showUpdateView = true
-                    }
-            }
-        }
-        .padding()
+        AlertNotification(label: updater.updateAvailable ? "Update Available" : "No Updates", icon: "arrow.down.app", buttonAction: {
+            showUpdateView = true
+        }, btnColor: Color.green, opacity: opacity, themeManager: themeManager)
         .onAppear {
             updater.checkForUpdates(showSheet: false)
         }
         .sheet(isPresented: $showUpdateView, content: {
             updater.getUpdateView()
         })
+
     }
 }
 
@@ -275,6 +260,7 @@ struct ReleasesView: View {
                 .font(.callout)
                 .opacity(0.5)
         }
+        .padding()
 
 
     }
