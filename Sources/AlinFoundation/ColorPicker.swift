@@ -10,10 +10,8 @@ import SwiftUI
 
 
 public struct ColorButtonView: View {
-//    @ObservedObject var appState: AFstate
     @ObservedObject var themeManager: ThemeManager
     @State private var showPopover = false
-//    @State private var hexCode: String = ""
     var templateColors: [Color]?
 
     private let defaultColors: [Color] = [
@@ -35,28 +33,25 @@ public struct ColorButtonView: View {
         let colors = templateColors ?? defaultColors
 
         Button(action: {
-//            hexCode = themeManager.pickerColor.toHex()
             showPopover = true
         }) {
-            Rectangle()
+            RoundedRectangle(cornerRadius: 5)
                 .fill(themeManager.pickerColor)
-                .frame(width: 85, height: 20)
-                .cornerRadius(5)
+                .frame(width: 22, height: 22)
                 .overlay(
                     ZStack {
                         RoundedRectangle(cornerRadius: 5)
-                            .strokeBorder(lineWidth: 1)
+                            .strokeBorder(lineWidth: 0.8)
                             .foregroundStyle(themeManager.pickerColor.luminance())
                             .opacity(0.3)
-                            .shadow(radius: 2)
-                        Text(themeManager.hexCode)
-                            .foregroundStyle(themeManager.pickerColor.luminance())
-                            .font(.callout)
+//                        Text(themeManager.hexCode)
+//                            .foregroundStyle(themeManager.pickerColor.luminance())
+//                            .font(.callout)
                     }
 
                 )
-                .padding(5)
         }
+        .help("Current color: \(themeManager.hexCode)")
         .buttonStyle(.plain)
         .popover(isPresented: $showPopover) {
             ColorPickerSliderView(themeManager: themeManager, templateColors: .constant(colors))
@@ -75,7 +70,6 @@ public struct ColorButtonView: View {
 
 public struct ColorPickerSliderView: View {
     @ObservedObject var themeManager: ThemeManager
-//    @Binding var hexCode: String
     @Binding var templateColors: [Color]
     @Environment(\.dismiss) var dismiss
     @State private var red: Double = 0
@@ -84,7 +78,6 @@ public struct ColorPickerSliderView: View {
 
     public init(themeManager: ThemeManager, templateColors: Binding<[Color]>) {
         self.themeManager = themeManager
-//        self._hexCode = hexCode
         self._templateColors = templateColors
     }
 
@@ -99,7 +92,7 @@ public struct ColorPickerSliderView: View {
                     Button("") {
                         copyToClipboard(themeManager.hexCode)
                     }
-                    .buttonStyle(SimpleButtonStyle(icon: "list.clipboard", help: "Copy", size: 18))
+                    .buttonStyle(SimpleButtonStyle(icon: "doc.on.doc", help: "Copy", size: 18))
 
                     Spacer()
 
@@ -122,16 +115,12 @@ public struct ColorPickerSliderView: View {
                     Spacer()
 
                     Button("") {
-                        dismiss()
+                        themeManager.setupAutoTheme()
                     }
-                    .buttonStyle(SimpleButtonStyle(icon: "x.circle", help: "Close", size: 18))
+                    .buttonStyle(SimpleButtonStyle(icon: "arrow.counterclockwise.circle", help: "Reset", size: 18))
+
                 }
 
-//                HStack {
-//                    Spacer()
-//                    Text("Supports 6 character hex code").font(.footnote).opacity(0.5)
-//                    Spacer()
-//                }
             }
             .frame(maxWidth: .infinity)
             .edgesIgnoringSafeArea(.all)
@@ -235,10 +224,20 @@ public struct ColorPickerSliderView: View {
                                     .opacity(0.5)
                             )
                     }
+
                 }
 
             }
-            .padding([.horizontal, .bottom], 15)
+            .padding([.horizontal], 15)
+
+            HStack {
+                Spacer()
+                Button("Close") {
+                    dismiss()
+                }
+                Spacer()
+            }
+            .padding(.bottom)
 
         }
         .frame(minWidth: 250)
@@ -283,10 +282,6 @@ public struct ColorPickerSliderView: View {
         themeManager.pickerColor.luminanceDisplayMode()
 //        hexCode = themeManager.pickerColor.toHex() ?? "#FFFFFF"
     }
-
-//    public func updateHexCode() {
-//        hexCode = String(format: "#%02x%02x%02x", Int(red * 255), Int(green * 255), Int(blue * 255))
-//    }
 
     public func setColorFrom(color: Color) {
         if let components = color.cgColor?.components, components.count >= 3 {

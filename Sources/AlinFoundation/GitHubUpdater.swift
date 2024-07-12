@@ -35,8 +35,8 @@ public class GitHubUpdater: ObservableObject {
         }
     }
 
-    public init(owner: String, repo: String) {
-        self.updaterService = UpdaterService(owner: owner, repo: repo)
+    public init(owner: String, repo: String, token: String = "") {
+        self.updaterService = UpdaterService(owner: owner, repo: repo, token: token)
 
         let storedInterval = defaults.double(forKey: "alinfoundation.updater.nextUpdateDate")
         self.nextUpdateDate = Date(timeIntervalSinceReferenceDate: storedInterval)

@@ -217,7 +217,7 @@ public struct LogViewDimensions: ViewModifier {
 }
 
 public extension View {
-    public func logDimensions() -> some View {
+    func logDimensions() -> some View {
         self.modifier(LogViewDimensions())
     }
 }
@@ -235,6 +235,11 @@ public extension View {
 public struct CustomImage: View {
     var systemName: String
     var size: CGFloat
+
+    public init(systemName: String, size: CGFloat) {
+        self.systemName = systemName
+        self.size = size
+    }
 
     public var body: some View {
         Image(systemName: systemName)
@@ -278,7 +283,7 @@ public struct MaterialBackground: ViewModifier {
 }
 
 public extension View {
-    public func material(_ material: NSVisualEffectView.Material = .hudWindow) -> some View {
+    func material(_ material: NSVisualEffectView.Material = .hudWindow) -> some View {
         self.modifier(MaterialBackground(material: material))
     }
 }

@@ -16,16 +16,20 @@ class UpdaterService: ObservableObject {
 
     private let owner: String
     private let repo: String
+    private let token: String
 
-    init(owner: String, repo: String) {
+    init(owner: String, repo: String, token: String) {
         self.owner = owner
         self.repo = repo
+        self.token = token
     }
 
     func loadGithubReleases(showSheet: Bool) {
         let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
-        let request = URLRequest(url: url)
-
+        var request = URLRequest(url: url)
+        if !token.isEmpty {
+            request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
+        }
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             guard let self = self, let data = data else { return }
 

@@ -4,7 +4,7 @@
 
 ## Features
 
-- **GitHubUpdater**: Allows seamless updates by checking the latest available versions from a specified GitHub repository.
+- **GitHubUpdater**: Allows seamless updates by checking the latest available versions from a specified GitHub repository. Supports private repos as well
 - **ColorPicker**: Minimalistic color picker that follows macOS interface guidelines
 - **Authorization**: Execute a sudo shell command, asking for permission from end-user
 - **PermissionsManager**: Check for permissions and show a view to manage these (Currently supports FDA, Accessibility, Automation)
@@ -55,7 +55,7 @@ import AlinFoundation
 
 @main
 struct FoundationTestingApp: App {
-    @StateObject private var updater = GitHubUpdater(owner: "USERNAME", repo: "REPO")
+    @StateObject private var updater = GitHubUpdater(owner: "USERNAME", repo: "REPO", token: "") //MARK: If you enter an API token, you can access private repositories as long as the API token has full repo permissions
     @StateObject private var themeManager = ThemeManager.shared
 
     var body: some Scene {

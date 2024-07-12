@@ -176,10 +176,6 @@ struct PermissionsListView: View {
                 Text("Permissions")
                     .font(.title2)
                 Spacer()
-                Button("") {
-                    dismiss()
-                }
-                .buttonStyle(SimpleButtonStyle(icon: "x.circle", help: "Close", size: 18))
             }
 
 
@@ -199,6 +195,20 @@ struct PermissionsListView: View {
                 }
                 .padding(5)
             }
+
+            HStack {
+                Spacer()
+                Button("Close") {
+                    dismiss()
+                }
+                Spacer()
+            }
+
+//            Button("Close") {
+//                dismiss()
+//            }
+//            .buttonStyle(.borderless)
+//            .buttonStyle(SimpleButtonStyle(icon: "x.circle", help: "Close", size: 18, padding: 0))
         }
         .padding()
         .background(themeManager.pickerColor)

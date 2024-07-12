@@ -76,7 +76,9 @@ public class ThemeManager: ObservableObject {
 
     private func savePickerColor() {
         userDefaults.setColor(pickerColor, forKey: "alinfoundation.theme.pickerColor")
-        updatePreviousColorIfNeeded()
+        if themeMode == .custom {
+            updatePreviousColorIfNeeded()
+        }
     }
 
     private func saveDisplayMode() {

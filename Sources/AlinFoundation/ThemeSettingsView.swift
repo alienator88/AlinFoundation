@@ -23,8 +23,11 @@ import SwiftUI
 public struct ThemeSettingsView: View {
     @ObservedObject private var themeManager = ThemeManager.shared
     @Environment(\.colorScheme) private var colorScheme
+    @State private var showLabel: Bool
 
-    public init() {}
+    public init(showLabel: Bool = false) {
+        self.showLabel = showLabel
+    }
 
     public var body: some View {
 
@@ -37,37 +40,33 @@ public struct ThemeSettingsView: View {
         ]
 
 
-        HStack {
-            Picker("Theme Mode:", selection: $themeManager.themeMode) {
+        HStack(alignment: .center, spacing: 5) {
+
+//            Spacer()
+
+            Picker("\(showLabel ? "Theme:" : "")", selection: $themeManager.themeMode) {
                 CustomImage(systemName: "circle.lefthalf.filled", size: 15).tag(ThemeManager.ThemeMode.auto).help("Auto")
                 CustomImage(systemName: "sun.max", size: 15).tag(ThemeManager.ThemeMode.light).help("Light")
                 CustomImage(systemName: "moon", size: 15).tag(ThemeManager.ThemeMode.dark).help("Dark")
                 CustomImage(systemName: "paintbrush", size: 15).tag(ThemeManager.ThemeMode.custom).help("Custom")
-//                Text("Auto").tag(ThemeManager.ThemeMode.auto)
-//                Text("Light").tag(ThemeManager.ThemeMode.light)
-//                Text("Dark").tag(ThemeManager.ThemeMode.dark)
-//                Text("Color").tag(ThemeManager.ThemeMode.custom)
             }
+            .pickerStyle(.segmented)
             .buttonStyle(.borderless)
-//            .onChange(of: themeManager.themeMode) { _ in
-//                print(themeManager.pickerColor)
-//                print(themeManager.pickerColor.darker())
-//            }
+            .frame(width: 120)
+            //            .onChange(of: themeManager.themeMode) { _ in
+            //                print(themeManager.pickerColor)
+            //                print(themeManager.pickerColor.darker())
+            //            }
 
-            Spacer()
 
             /// This shows a minimalistic color picker if Custom theme mode is selected
             if themeManager.themeMode == .custom {
                 ColorButtonView(themeManager: themeManager, templateColors: templateColors)
-                Button("") {
-                    themeManager.setupAutoTheme()
-                }
-                .buttonStyle(SimpleButtonStyle(icon: "arrow.counterclockwise.circle", help: "Reset", size: 18))
             }
 
+//            Spacer()
 
         }
         .padding()
-        .frame(minHeight: 64)
     }
 }
