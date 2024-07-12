@@ -55,22 +55,26 @@ import AlinFoundation
 
 @main
 struct FoundationTestingApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var updater = GitHubUpdater(owner: "USERNAME", repo: "REPO")
     @StateObject private var themeManager = ThemeManager.shared
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                /// Load theme manager in the environment
                 .environmentObject(themeManager)
+                /// Load updater in the environment
                 .environmentObject(updater)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
+                    /// Set background based on the theme manager color picker
                     themeManager.pickerColor
                 )
                 .onAppear{
+                    /// Set the appearance on load based on the user's mode selection
                     themeManager.setupAppearance()
                 }
+                /// Set the color scheme of the app to the Theme Manager
                 .preferredColorScheme(themeManager.displayMode.colorScheme)
         }
         .windowStyle(.hiddenTitleBar)
