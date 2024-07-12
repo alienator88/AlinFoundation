@@ -8,28 +8,6 @@
 import Foundation
 import SwiftUI
 
-/// Usage:
-
-//import SwiftUI
-//import YourThemePackageName
-//
-//@main
-//struct YourApp: App {
-//    @StateObject private var themeManager = ThemeManager.shared
-//    private let appearanceObserver = AppearanceObserver()
-//
-//    var body: some Scene {
-//        WindowGroup {
-//            ContentView()
-//                .environmentObject(themeManager)
-//                .onAppear {
-//                    themeManager.setupInitialAppearance()
-//                }
-//        }
-//    }
-//}
-
-
 //MARK: ThemeManager
 
 public class ThemeManager: ObservableObject {

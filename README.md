@@ -10,7 +10,8 @@
 - **PermissionsManager**: Check for permissions and show a view to manage these (Currently supports FDA, Accessibility, Automation)
 - **Utilities**: A multitude of functions and extensions
 - **Styles**: Some custom views, buttonStyles, etc.
-- **ThemeManager**: TO-DO
+- **ThemeManager**: Choose appearance modes like Auto, Light, Dark. Or choose custom to set a theme color using the color picker
+- **TokenManager**: Save passwords, keys and more to Keychain Access with encryption
 
 
 

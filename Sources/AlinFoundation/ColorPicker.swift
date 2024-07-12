@@ -246,6 +246,7 @@ public struct ColorPickerSliderView: View {
         .onAppear {
             updateRGBValues(from: themeManager.pickerColor)
         }
+        .background(themeManager.pickerColor.padding(-80))
     }
 
     private func processHexCode(_ hex: String) -> String {

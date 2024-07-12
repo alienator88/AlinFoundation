@@ -11,6 +11,7 @@ import SwiftUI
 struct UpdateView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var updaterService: UpdaterService
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var isAppInCorrectDirectory: Bool = true
     @State private var isUserAdmin: Bool = true
 
@@ -78,32 +79,33 @@ struct UpdateView: View {
                 }
 
             }
-            .padding(5)
-            .padding(.bottom, isAppInCorrectDirectory ? 10 : 0)
+            .padding(.vertical)
+//            .padding(.bottom, isAppInCorrectDirectory ? 10 : 0)
         }
-        .safeAreaInset(edge: .bottom, content: {
-            if !isAppInCorrectDirectory {
-                VStack(spacing: 0) {
-                    Divider()
-                    HStack {
-                        Spacer()
-                        Text("To avoid update issues, please move \(Bundle.main.name) to the \(isUserAdmin ? "/Applications" : "\(NSHomeDirectory())/Applications") folder before updating")
-                            .font(.callout)
-                            .opacity(0.5)
-                        Spacer()
-                    }
-                    .padding(.vertical, 7)
-                }
-
-
-            }
-        })
-        .onAppear {
-            checkAppDirectoryAndUserRole { result in
-                isUserAdmin = result.isAdmin
-                isAppInCorrectDirectory = result.isInCorrectDirectory
-            }
-        }
+        .background(themeManager.pickerColor)
+//        .safeAreaInset(edge: .bottom, content: {
+//            if !isAppInCorrectDirectory {
+//                VStack(spacing: 0) {
+//                    Divider()
+//                    HStack {
+//                        Spacer()
+//                        Text("To avoid update issues, please move \(Bundle.main.name) to the \(isUserAdmin ? "/Applications" : "\(NSHomeDirectory())/Applications") folder before updating")
+//                            .font(.callout)
+//                            .opacity(0.5)
+//                        Spacer()
+//                    }
+//                    .padding(.vertical, 7)
+//                }
+//
+//
+//            }
+//        })
+//        .onAppear {
+//            checkAppDirectoryAndUserRole { result in
+//                isUserAdmin = result.isAdmin
+//                isAppInCorrectDirectory = result.isInCorrectDirectory
+//            }
+//        }
     }
 }
 
@@ -112,6 +114,7 @@ struct UpdateView: View {
 struct NoUpdateView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var updaterService: UpdaterService
+    @EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
         VStack(spacing: 0) {
@@ -157,6 +160,8 @@ struct NoUpdateView: View {
             .padding(.vertical)
 
         }
+        .background(themeManager.pickerColor)
+
     }
 }
 

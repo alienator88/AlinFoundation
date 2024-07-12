@@ -165,6 +165,7 @@ public struct PermissionsView: View {
 
 struct PermissionsListView: View {
     @Environment(\.dismiss) var dismiss
+    @ObservedObject var themeManager = ThemeManager.shared
     @Binding var isPresented: Bool
     let results: PermissionManager.PermissionsCheckResults
 
@@ -200,7 +201,7 @@ struct PermissionsListView: View {
             }
         }
         .padding()
-        .material()
+        .background(themeManager.pickerColor)
         .frame(width: 250)
     }
 
