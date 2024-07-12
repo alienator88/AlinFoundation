@@ -13,6 +13,7 @@ import SwiftUI
 public class ThemeManager: ObservableObject {
     public static let shared = ThemeManager()
     private let userDefaults = UserDefaults.standard
+    private let appearanceObserver = AppearanceObserver()
     @Environment(\.colorScheme) private var colorScheme
 
     @Published public var pickerColor: Color {

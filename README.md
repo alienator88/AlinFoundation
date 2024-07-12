@@ -49,29 +49,31 @@ import AlinFoundation
 
 ### App.swift
 ```swift
+import SwiftUI
+import AppKit
+import AlinFoundation
+
 @main
 struct FoundationTestingApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var appState = AFstate()
     @StateObject private var updater = GitHubUpdater(owner: "USERNAME", repo: "REPO")
+    @StateObject private var themeManager = ThemeManager.shared
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(themeManager)
                 .environmentObject(updater)
-                .environmentObject(appState)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
-                    appState.themeColor
+                    themeManager.pickerColor
                 )
+                .onAppear{
+                    themeManager.setupAppearance()
+                }
+                .preferredColorScheme(themeManager.displayMode.colorScheme)
         }
         .windowStyle(.hiddenTitleBar)
-    }
-}
-
-class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-       return true
     }
 }
 ```
@@ -83,67 +85,126 @@ import AlinFoundation
 
 struct ContentView: View {
     @EnvironmentObject var updater: GitHubUpdater
-    @EnvironmentObject var appState: AFstate
+    @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.colorScheme) var colorScheme
     @State private var showNotification: Bool = false
+    @State private var token: String = ""
+    @State private var tokenStatus: String = ""
     @State private var permissionResults: PermissionManager.PermissionsCheckResults?
 
     var body: some View {
-        let slate = colorScheme == .light ? Color(.sRGB, red: 0.499549, green: 0.545169, blue: 0.682028, opacity: 1) : Color(.sRGB, red: 0.188143, green: 0.208556, blue: 0.262679, opacity: 1)
-        let solarized = colorScheme == .light ? Color(.sRGB, red: 0.554372, green: 0.6557, blue: 0.734336, opacity: 1) : Color(.sRGB, red: 0.117257, green: 0.22506, blue: 0.249171, opacity: 1)
-        let dracula = colorScheme == .light ? Color(.sRGB, red: 0.567094, green: 0.562125, blue: 0.81285, opacity: 1) : Color(.sRGB, red: 0.268614, green: 0.264737, blue: 0.383503, opacity: 1)
-        let macOS = colorScheme == .light ? Color(.sRGB, red: 1.0, green: 1.0, blue: 1.0, opacity: 1) : Color(.sRGB, red: 0.149, green: 0.149, blue: 0.149, opacity: 1)
 
-        VStack {
-
-            /// This shows a permission notification view if permissions are missing
-            if let results = permissionResults {
-                PermissionsView(showNotification: $showNotification, results: results)
-            }
-
-            /// This shows a minimalistic color picker
-            ColorButtonView(appState: appState, templateColors: [slate, solarized, dracula, macOS])
-
-            /// This will check for an update on appear of the button and show if there's one available or not in the label
-            updater.getUpdateButton()
-                .controlSize(.extraLarge)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(lineWidth: 1)
+        HStack(spacing: 0) {
+            ZStack {
+                
+                VStack {
+                    Spacer()
                 }
+                .materialColor(themeManager: themeManager, brightness: 5, opacity: 1)
 
-            /// This will show the last 3 versions release notes
-            updater.getReleasesView()
-                .frame(width: 400, height: 300)
+                VStack(alignment: .leading, spacing: 15) {
+
+                    Text("Permissions Component").font(.title2)
+                    /// This shows a permission notification view if permissions are missing
+                    if let results = permissionResults {
+                        PermissionsView(showNotification: $showNotification, results: results, dark: false, opacity: 1)
+                    }
+
+                    Divider()
+
+                    Text("Updater Component").font(.title2)
+                    /// This will check for an update on appear of the button and show if there's one available or not in the label
+                    updater.getUpdateButton(dark: false, opacity: 1)
+
+                    Divider()
+
+                    Text("Frequency Component").font(.title2)
+                    /// This will allow the user to set how often to check for updates
+                    updater.getFrequencyView()
+
+                    Divider()
+
+                    Text("Appearance Component").font(.title2)
+                    /// Show appearance/theme mode changer
+                    ThemeSettingsView()
+
+                    Spacer()
+                }
                 .padding()
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(lineWidth: 1)
-                }
-
-            /// This will allow the user to set how often to check for updates
-            updater.getFrequencyView()
-                .padding()
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(lineWidth: 1)
-                }
-        }
-        .padding()
-        .onAppear {
-            /// This will check for updates on load based on the update frequency
-            updater.checkAndUpdateIfNeeded()
-
-            /// Check permissions on load
-            PermissionManager.checkPermissions(types: [.fullDiskAccess, .accessibility]) { results in
-                self.permissionResults = results
-                self.showNotification = !results.allCheckedPermissionsGranted
+                .padding(.top, 40)
             }
+            .frame(width: 350)
+
+            Divider()
+
+
+            VStack(alignment: .leading, spacing: 20) {
+
+                Text("Updater Releases Component").font(.title)
+                /// This will show the last 3 versions release notes
+                updater.getReleasesView()
+                    .frame(height: 300)
+                    .background {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(themeManager.pickerColor.adjustBrightness())
+                    }
+
+                Divider()
+
+
+                /// Create and store an encrypted token in Keychain Access
+                Text("TokenManager Component").font(.title2)
+                let tokenManager = TokenManager(name: "GitHub Token - Test")
+                HStack {
+                    TextField("Enter Token", text: $token)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    Button("Create") {
+                        // Save token
+                        tokenManager.saveToken(token) { success in
+                            if success {
+                                tokenStatus = "Token saved: \(token)"
+                            } else {
+                                tokenStatus = "Failed to save token: \(token)"
+                            }
+                        }
+                    }
+                    Button("Load") {
+                        // Load a token
+                        if let token = tokenManager.loadToken() {
+                            tokenStatus = "Loaded token: \(token)"
+                        } else {
+                            tokenStatus = "No token found: \(token)"
+                        }
+                    }
+                    Button("Delete") {
+                        // Delete a token
+                        tokenManager.deleteToken()
+                        tokenStatus = "Token deleted: \(token)"
+                    }
+                }
+                Text(tokenStatus)
+
+                Spacer()
+
+            }
+            .padding()
+            .onAppear {
+                /// This will check for updates on load based on the update frequency
+                updater.checkAndUpdateIfNeeded()
+
+                /// Check permissions on load
+                PermissionManager.checkPermissions(types: [.fullDiskAccess, .accessibility, .automation]) { results in
+                    self.permissionResults = results
+                    self.showNotification = !results.allCheckedPermissionsGranted
+                }
+            }
+            .sheet(isPresented: $updater.showSheet, content: {
+                /// This will show the update sheet based on the frequency check function only
+                updater.getUpdateView()
+            })
         }
-        .sheet(isPresented: $updater.showSheet, content: {
-            /// This will show the update sheet based on the frequency check function only
-            updater.getUpdateView()
-        })
+        .edgesIgnoringSafeArea(.all)
+
 
     }
 }
