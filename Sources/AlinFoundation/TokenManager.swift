@@ -18,6 +18,10 @@ public class TokenManager {
     }
 
     public func saveToken(_ token: String, completion: @escaping (Bool) -> Void) {
+        guard !token.isEmpty else {
+            completion(false)
+            return
+        }
         let data = Data(token.utf8)
         let query = [
             kSecClass as String: kSecClassGenericPassword,
@@ -42,7 +46,7 @@ public class TokenManager {
         }
     }
 
-    public func loadToken() -> String? {
+    public func loadToken(completion: @escaping (Bool) -> Void) -> String {
         let query = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -54,14 +58,16 @@ public class TokenManager {
         var result: AnyObject?
         let status = SecItemCopyMatching(query, &result)
         if status == noErr, let data = result as? Data, let token = String(data: data, encoding: .utf8) {
+            completion(true)
             return token
         } else {
             print("Error retrieving token from Keychain: \(status)")
-            return nil
+            completion(false)
+            return ""
         }
     }
 
-    public func deleteToken() {
+    public func deleteToken(completion: @escaping (Bool) -> Void) {
         let query = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -71,6 +77,9 @@ public class TokenManager {
         let status = SecItemDelete(query)
         if status != noErr {
             print("Error deleting token from Keychain: \(status)")
+            completion(false)
+        } else {
+            completion(true)
         }
     }
 }

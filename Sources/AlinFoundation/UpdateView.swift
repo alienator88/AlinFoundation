@@ -48,13 +48,9 @@ struct UpdateView: View {
             Spacer()
 
             VStack() {
-                Text(updaterService.progressBar.0)
-                    .opacity(0.5)
-                ProgressView(value: updaterService.progressBar.1, total: 1.0)
-                    .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-                    .frame(height: 10)
+                ProgressView(value: updaterService.progressBar.1, total: 1.0, label: {Text(updaterService.progressBar.0)}, currentValueLabel: {Text("\(Int(updaterService.progressBar.1 * 100))%")})
             }
-            .padding([.horizontal, .bottom])
+            .padding()
 
             HStack(alignment: .center, spacing: 10) {
 
@@ -234,7 +230,6 @@ public struct FrequencyView: View {
         .onReceive(updater.$nextUpdateDate) { newDate in
             localNextUpdateDate = newDate
         }
-        .backgroundAF(opacity: 1)
     }
 }
 
@@ -269,8 +264,5 @@ public struct ReleasesView: View {
                 .padding(5)
 
         }
-        .backgroundAF(opacity: 0.5)
-
-
     }
 }

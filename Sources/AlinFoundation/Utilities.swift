@@ -605,7 +605,7 @@ public extension Color {
 }
 
 public extension Color {
-    func luminance() -> Color {
+    func luminance(lightColor: Color = .black, darkColor: Color = .white) -> Color {
         if self == .clear {
             return Color.primary
         }
@@ -618,7 +618,7 @@ public extension Color {
         let luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
 
         // Use a threshold to determine if the color is bright or dark
-        return luminance > 0.65 ? Color.black : Color.white
+        return luminance > 0.65 ? lightColor : darkColor
     }
 }
 

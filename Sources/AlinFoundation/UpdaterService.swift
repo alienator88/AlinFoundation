@@ -12,7 +12,7 @@ class UpdaterService: ObservableObject {
     @Published var releases: [Release] = []
     @Published var updateAvailable: Bool = false
     @Published var showSheet: Bool = false
-    @Published var progressBar: (String, Double) = ("", 0.0)
+    @Published var progressBar: (String, Double) = ("Progress", 0.0)
 
     private let owner: String
     private let repo: String

@@ -56,6 +56,42 @@ public struct SimpleButtonStyle: ButtonStyle {
     }
 }
 
+// AF button style
+public struct AFButtonStyle: ButtonStyle {
+    @State private var hovered = false
+    @State private var pressed = false
+    var image: String
+
+    public init(image: String) {
+        self.image = image
+    }
+
+    public func makeBody(configuration: Configuration) -> some View {
+        ZStack {
+            Rectangle()
+                .fill(.primary.opacity(0.1))
+            Circle()
+                .frame(width: configuration.isPressed ? 50 : 0, height: configuration.isPressed ? 50 : 0)
+                .foregroundStyle(.blue)
+            Image(systemName: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 15, height: 15)
+                .foregroundColor(pressed ? .white : hovered ? .primary : .primary.opacity(0.7))
+        }
+        .frame(width: 30, height: 30)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .contentShape(Rectangle())
+        .animation(.easeInOut(duration: 0.3), value: configuration.isPressed)
+        .onHover(perform: { hovering in
+            hovered = hovering
+        })
+        .onChange(of: configuration.isPressed) { isPressed in
+            pressed = isPressed
+        }
+    }
+}
+
 // Info button that takes some text as input and shows a popover on click
 public struct InfoButton: View {
     @State private var isPopoverPresented: Bool = false
@@ -117,17 +153,67 @@ public struct InfoButton: View {
 }
 
 
-// Rounded textfield style
-public struct RoundedTextFieldStyle: TextFieldStyle {
-    public func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding(8)
-            .cornerRadius(6)
-            .textFieldStyle(.plain)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(.primary.opacity(0.4), lineWidth: 0.8)
-            )
+// Animated Button
+public struct AniButton: View {
+    @State private var show = false
+
+    public var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(.white.opacity(0.1))
+            Circle()
+                .frame(width: show ? 400 : 0, height: show ? 400 : 0)
+                .foregroundStyle(.blue)
+            if #available(macOS 14.0, *) {
+                Image(systemName: show ? "paintbrush.fill" : "paintbrush")
+                    .font(.system(size: 25))
+                    .foregroundStyle(show ? .white : .white.opacity(0.5))
+                    .contentTransition(.symbolEffect)
+            } else {
+                Image(systemName: show ? "paintbrush.fill" : "paintbrush")
+                    .font(.system(size: 25))
+                    .foregroundStyle(show ? .white : .white.opacity(0.5))
+                    .contentTransition(.opacity)
+            }
+        }
+        .frame(width: 150, height: 150)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeIn) {
+                show.toggle()
+            }
+        }
+    }
+}
+
+
+
+
+// TextView override for focus ring and caret color
+public extension NSTextView {
+    override var frame: CGRect {
+        didSet {
+            insertionPointColor = NSColor(Color.primary.opacity(0.5)) // Set TextView/TextField caret color
+        }
+    }
+
+    override var focusRingType: NSFocusRingType {
+        get { .none } // Disable focus ring on TextField
+        set { }
+    }
+}
+
+
+// View modifier for when if available is needed
+public extension View {
+    @ViewBuilder
+    public func ifAvailable<Content: View>(@ViewBuilder modifier: (Self) -> Content) -> some View {
+        if #available(macOS 13.0, *) {
+            modifier(self)
+        } else {
+            self
+        }
     }
 }
 
@@ -175,11 +261,6 @@ public struct AlertNotification: View {
             }
         }
         .frame(height: 30)
-        .backgroundAF(opacity: 1)
-//        .padding(7)
-//        .background(themeManager.displayMode == .dark ? themeManager.pickerColor.adjustBrightness().opacity(opacity) : themeManager.pickerColor.adjustBrightness(lighten: true).opacity(opacity))
-//        .clipShape(RoundedRectangle(cornerRadius: 6))
-//        .padding()
     }
 }
 
@@ -197,9 +278,50 @@ struct CustomBackgroundView: ViewModifier {
     }
 }
 
-extension View {
-    func backgroundAF(brightness: Double = 10.0, opacity: Double) -> some View {
+public extension View {
+    func backgroundAF(brightness: Double = 10.0, opacity: Double = 1.0) -> some View {
         self.modifier(CustomBackgroundView(brightness: brightness, opacity: opacity))
+    }
+}
+
+
+// Custom progress bar
+public struct CustomBarProgressStyle: ProgressViewStyle {
+    var trackColor: Color
+    var progressColor: Color
+    var height: Double = 10.0
+    var labelFontStyle: Font = .body
+
+    public func makeBody(configuration: Configuration) -> some View {
+
+        let progress = configuration.fractionCompleted ?? 0.0
+
+        GeometryReader { geometry in
+
+            VStack(alignment: .leading) {
+
+                configuration.label
+                    .font(labelFontStyle)
+
+                RoundedRectangle(cornerRadius: 10.0)
+                    .fill(trackColor.adjustBrightness())
+                    .frame(height: height)
+                    .frame(width: geometry.size.width)
+                    .overlay(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 10.0)
+                            .fill(progressColor.luminance())
+                            .frame(width: geometry.size.width * progress)
+                    }
+
+                if let currentValueLabel = configuration.currentValueLabel {
+                    currentValueLabel
+                        .font(.callout)
+                        .foregroundColor(progressColor.luminance().opacity(0.5))
+                }
+
+            }
+
+        }
     }
 }
 
