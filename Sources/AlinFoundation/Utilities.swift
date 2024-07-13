@@ -20,7 +20,7 @@ import CoreImage
 ///   print(output)
 /// }
 
-func runShell(_ command: String, completion: @escaping (String) -> Void) {
+public func runShell(_ command: String, completion: @escaping (String) -> Void) {
     // Create a new process
     let process = Process()
     // Set the executable to be used (assuming bash here, adjust as needed for your shell)
@@ -79,7 +79,7 @@ func runShell(_ command: String, completion: @escaping (String) -> Void) {
 ///    }
 /// }
 
-func runAppleScript(_ command: String, completion: @escaping (Result<String, Error>) -> Void) {
+public func runAppleScript(_ command: String, completion: @escaping (Result<String, Error>) -> Void) {
     // Create the AppleScript object from the command string
     if let script = NSAppleScript(source: command) {
         var errorDict: NSDictionary?
@@ -227,7 +227,7 @@ public func isVersionOrHigher(version: Int) -> Bool {
 }
 
 // Check app directory and user's role
-func checkAppDirectoryAndUserRole(completion: @escaping ((isInCorrectDirectory: Bool, isAdmin: Bool)) -> Void) {
+public func checkAppDirectoryAndUserRole(completion: @escaping ((isInCorrectDirectory: Bool, isAdmin: Bool)) -> Void) {
     isCurrentUserAdmin { isAdmin in
         let bundlePath = Bundle.main.bundlePath as NSString
         let applicationsDir = "/Applications"
@@ -250,7 +250,7 @@ func checkAppDirectoryAndUserRole(completion: @escaping ((isInCorrectDirectory: 
 }
 
 // Check if user is admin
-func isCurrentUserAdmin(completion: @escaping (Bool) -> Void) {
+public func isCurrentUserAdmin(completion: @escaping (Bool) -> Void) {
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/bin/zsh") // Using zsh, macOS default shell
     process.arguments = ["-c", "groups $(whoami) | grep -q ' admin '"]

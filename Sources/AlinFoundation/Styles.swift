@@ -205,18 +205,6 @@ public extension NSTextView {
 }
 
 
-// View modifier for when if available is needed
-public extension View {
-    @ViewBuilder
-    public func ifAvailable<Content: View>(@ViewBuilder modifier: (Self) -> Content) -> some View {
-        if #available(macOS 13.0, *) {
-            modifier(self)
-        } else {
-            self
-        }
-    }
-}
-
 
 // Alert Badge Notifications
 public struct AlertNotification: View {
@@ -227,6 +215,15 @@ public struct AlertNotification: View {
     var opacity: Double
     @ObservedObject var themeManager: ThemeManager
     @State private var hovered = false
+
+    public init(label: String, icon: String, buttonAction: @escaping () -> Void, btnColor: Color, opacity: Double, themeManager: ThemeManager) {
+        self.label = label
+        self.icon = icon
+        self.buttonAction = buttonAction
+        self.btnColor = btnColor
+        self.opacity = opacity
+        self.themeManager = themeManager
+    }
 
     public var body: some View {
         HStack {
@@ -265,12 +262,12 @@ public struct AlertNotification: View {
 }
 
 // Components Background
-struct CustomBackgroundView: ViewModifier {
+public struct CustomBackgroundView: ViewModifier {
     @ObservedObject private var themeManager = ThemeManager.shared
     var brightness: Double
     var opacity: Double
 
-    func body(content: Content) -> some View {
+    public func body(content: Content) -> some View {
         content
             .padding(7)
             .background(themeManager.pickerColor.adjustBrightness(brightness).opacity(opacity))
@@ -433,12 +430,12 @@ public extension View {
 
 
 // Transparent colored background
-struct BackgroundColorModifier: ViewModifier {
+public struct BackgroundColorModifier: ViewModifier {
     @ObservedObject var themeManager: ThemeManager
     var brightness: Double
     var opacity: Double
 
-    func body(content: Content) -> some View {
+    public func body(content: Content) -> some View {
         ZStack {
             themeManager.pickerColor.adjustBrightness(brightness).opacity(opacity)
                 .material()
@@ -457,6 +454,10 @@ public extension View {
 // Labeled Divider
 public struct LabeledDivider: View {
     let label: String
+
+    public init(label: String) {
+        self.label = label
+    }
 
     public var body: some View {
         HStack(spacing: 0) {
