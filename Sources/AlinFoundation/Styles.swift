@@ -133,7 +133,7 @@ public struct RoundedTextFieldStyle: TextFieldStyle {
 
 
 // Alert Badge Notifications
-struct AlertNotification: View {
+public struct AlertNotification: View {
     var label: String
     var icon: String
     var buttonAction: () -> Void
@@ -142,7 +142,7 @@ struct AlertNotification: View {
     @ObservedObject var themeManager: ThemeManager
     @State private var hovered = false
 
-    var body: some View {
+    public var body: some View {
         HStack {
             Text(label)
                 .font(.title3)
@@ -175,10 +175,31 @@ struct AlertNotification: View {
             }
         }
         .frame(height: 30)
-        .padding(5)
-        .background(themeManager.displayMode == .dark ? themeManager.pickerColor.adjustBrightness().opacity(opacity) : themeManager.pickerColor.adjustBrightness(lighten: true).opacity(opacity))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .padding()
+        .backgroundAF(opacity: 1)
+//        .padding(7)
+//        .background(themeManager.displayMode == .dark ? themeManager.pickerColor.adjustBrightness().opacity(opacity) : themeManager.pickerColor.adjustBrightness(lighten: true).opacity(opacity))
+//        .clipShape(RoundedRectangle(cornerRadius: 6))
+//        .padding()
+    }
+}
+
+// Components Background
+struct CustomBackgroundView: ViewModifier {
+    @ObservedObject private var themeManager = ThemeManager.shared
+    var brightness: Double
+    var opacity: Double
+
+    func body(content: Content) -> some View {
+        content
+            .padding(7)
+            .background(themeManager.pickerColor.adjustBrightness(brightness).opacity(opacity))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+extension View {
+    func backgroundAF(brightness: Double = 10.0, opacity: Double) -> some View {
+        self.modifier(CustomBackgroundView(brightness: brightness, opacity: opacity))
     }
 }
 

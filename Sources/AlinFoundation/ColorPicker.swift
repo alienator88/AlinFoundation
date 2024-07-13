@@ -33,6 +33,9 @@ public struct ColorButtonView: View {
         let colors = templateColors ?? defaultColors
 
         Button(action: {
+            if themeManager.themeMode != .custom {
+                themeManager.themeMode = .custom
+            }
             showPopover = true
         }) {
             RoundedRectangle(cornerRadius: 5)
@@ -44,9 +47,6 @@ public struct ColorButtonView: View {
                             .strokeBorder(lineWidth: 0.8)
                             .foregroundStyle(themeManager.pickerColor.luminance())
                             .opacity(0.3)
-//                        Text(themeManager.hexCode)
-//                            .foregroundStyle(themeManager.pickerColor.luminance())
-//                            .font(.callout)
                     }
 
                 )
@@ -232,9 +232,12 @@ public struct ColorPickerSliderView: View {
 
             HStack {
                 Spacer()
+
                 Button("Close") {
                     dismiss()
                 }
+                .padding(5)
+
                 Spacer()
             }
             .padding(.bottom)

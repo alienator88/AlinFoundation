@@ -196,18 +196,18 @@ public struct UpdateButton: View {
 
 
 
-struct FrequencyView: View {
+public struct FrequencyView: View {
     @ObservedObject var updater: GitHubUpdater
     @State private var localNextUpdateDate: Date
 
-    init(updater: GitHubUpdater) {
+    public init(updater: GitHubUpdater) {
         self.updater = updater
         _localNextUpdateDate = State(initialValue: updater.nextUpdateDate)
     }
 
-    var body: some View {
+    public var body: some View {
         HStack {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text("\(Bundle.main.name) will check for updates")
                     .font(.callout)
 
@@ -217,6 +217,7 @@ struct FrequencyView: View {
                         .opacity(0.5)
                 }
             }
+            .padding(.leading, 2)
 
             Spacer()
 
@@ -230,22 +231,23 @@ struct FrequencyView: View {
             }
             .buttonStyle(.borderless)
         }
-        .padding()
         .onReceive(updater.$nextUpdateDate) { newDate in
             localNextUpdateDate = newDate
         }
+        .backgroundAF(opacity: 1)
     }
 }
 
 
-struct ReleasesView: View {
+public struct ReleasesView: View {
     @ObservedObject var updater: GitHubUpdater
+    @ObservedObject var themeManager = ThemeManager.shared
 
-    init(updater: GitHubUpdater) {
+    public init(updater: GitHubUpdater) {
         self.updater = updater
     }
 
-    var body: some View {
+    public var body: some View {
 
         VStack {
             ScrollView {
@@ -264,8 +266,10 @@ struct ReleasesView: View {
             Text("Showing last 3 releases")
                 .font(.callout)
                 .opacity(0.5)
+                .padding(5)
+
         }
-        .padding()
+        .backgroundAF(opacity: 0.5)
 
 
     }

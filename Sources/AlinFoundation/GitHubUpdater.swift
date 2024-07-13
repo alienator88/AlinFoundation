@@ -89,19 +89,6 @@ public class GitHubUpdater: ObservableObject {
         }
     }
 
-    public func getUpdateButton(dark: Bool = false, opacity: Double = 1) -> some View {
-        UpdateButton(updater: self, dark: dark, opacity: opacity)
-    }
-
-    public func getFrequencyView() -> some View {
-        FrequencyView(updater: self)
-            .frame(minWidth: 300)
-    }
-
-    public func getReleasesView() -> some View {
-        ReleasesView(updater: self)
-            .frame(minWidth: 300)
-    }
 
     public func checkAndUpdateIfNeeded() {
         guard updateFrequency != .none else {
