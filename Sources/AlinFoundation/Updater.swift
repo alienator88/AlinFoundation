@@ -70,8 +70,8 @@ public class Updater: ObservableObject {
             .store(in: &cancellables)
     }
 
-    public func checkForUpdates(showSheet: Bool = true) {
-        updaterService.loadGithubReleases(showSheet: showSheet)
+    public func checkForUpdates(showSheet: Bool = true, checkUpdate: Bool = true) {
+        updaterService.loadGithubReleases(showSheet: showSheet, checkUpdate: checkUpdate)
     }
 
     public func downloadUpdate() {
@@ -85,7 +85,7 @@ public class Updater: ObservableObject {
 
     public func checkAndUpdateIfNeeded() {
         guard updateFrequency != .none else {
-            self.checkForUpdates(showSheet: false)
+            self.checkForUpdates(showSheet: false, checkUpdate: false)
             print("Updater: frequency set to never, skipping update check")
             return
         }
@@ -95,10 +95,9 @@ public class Updater: ObservableObject {
 //        if now <= nextUpdateDate { //MARK: Debugging
         if now >= nextUpdateDate {
             print("Updater: performing update check")
-            self.checkForUpdates()
             setNextUpdateDate()
         } else {
-            self.checkForUpdates(showSheet: false)
+            self.checkForUpdates(showSheet: false, checkUpdate: false)
             print("Updater: next update date is in the future, skipping (\(formattedDate(nextUpdateDate)))")
         }
     }

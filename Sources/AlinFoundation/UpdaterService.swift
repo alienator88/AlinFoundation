@@ -25,7 +25,7 @@ class UpdaterService: ObservableObject {
         self.token = token
     }
 
-    func loadGithubReleases(showSheet: Bool) {
+    func loadGithubReleases(showSheet: Bool, checkUpdate: Bool) {
         let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
         var request = URLRequest(url: url)
         if !token.isEmpty {
@@ -37,7 +37,9 @@ class UpdaterService: ObservableObject {
             if let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) {
                 DispatchQueue.main.async {
                     self.releases = Array(decodedResponse.prefix(3))
-                    self.checkForUpdate(showSheet: showSheet)
+                    if checkUpdate {
+                        self.checkForUpdate(showSheet: showSheet)
+                    }
                 }
             }
         }.resume()
