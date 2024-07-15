@@ -12,6 +12,7 @@ import Combine
 public class Updater: ObservableObject {
     @Published public var updateAvailable: Bool = false
     @Published public var showSheet: Bool = false
+    @Published public var showSheetSettings: Bool = false
     @Published public var releases: [Release] = []
     @Published public var progressBar: (String, Double) = ("", 0.0)
     @Published public var nextUpdateDate: Date {
@@ -58,6 +59,10 @@ public class Updater: ObservableObject {
 
         updaterService.$showSheet
             .assign(to: \.showSheet, on: self)
+            .store(in: &cancellables)
+
+        updaterService.$showSheetSettings
+            .assign(to: \.showSheetSettings, on: self)
             .store(in: &cancellables)
 
         updaterService.$progressBar

@@ -12,6 +12,7 @@ class UpdaterService: ObservableObject {
     @Published var releases: [Release] = []
     @Published var updateAvailable: Bool = false
     @Published var showSheet: Bool = false
+    @Published var showSheetSettings: Bool = false
     @Published var progressBar: (String, Double) = ("", 0.0)
 
     private let owner: String
@@ -47,6 +48,7 @@ class UpdaterService: ObservableObject {
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
         updateAvailable = latestRelease.tag_name > currentVersion
         self.showSheet = showSheet
+        self.showSheetSettings = showSheet
     }
 
     func downloadUpdate() {

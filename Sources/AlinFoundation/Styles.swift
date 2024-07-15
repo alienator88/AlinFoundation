@@ -152,6 +152,91 @@ public struct InfoButton: View {
     }
 }
 
+// PermissionInfoButton
+struct InfoButtonPerms: View {
+    @State private var isPopoverPresented: Bool = false
+    let color: Color
+    let label: String
+    let warning: Bool
+
+    public init(color: Color = .primary, label: String = "", warning: Bool = false) {
+        self.color = color
+        self.label = label
+        self.warning = warning
+
+    }
+
+    var body: some View {
+        Button(action: {
+            self.isPopoverPresented.toggle()
+        }) {
+            HStack(alignment: .center, spacing: 5) {
+                Image(systemName: !warning ? "info.circle.fill" : "exclamationmark.triangle.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
+                    .foregroundColor(!warning ? color.opacity(0.7) : color)
+                    .frame(height: 16)
+                if !label.isEmpty {
+                    Text(label)
+                        .font(.callout)
+                        .foregroundColor(color.opacity(0.7))
+
+                }
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onHover { isHovered in
+            if isHovered {
+                NSCursor.pointingHand.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+        .popover(isPresented: $isPopoverPresented, arrowEdge: .bottom) {
+            VStack(alignment: .leading, spacing: 15) {
+
+                HStack(alignment: .top, spacing: 20) {
+                    Image(systemName: "externaldrive")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .foregroundStyle(.primary.opacity(0.5))
+                    Text("Full Disk permission to access files/folders in system paths")
+                        .font(.callout)
+                        .foregroundStyle(.primary.opacity(0.5))
+                }
+
+                HStack(alignment: .top, spacing: 20) {
+                    Image(systemName: "accessibility")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .foregroundStyle(.primary.opacity(0.5))
+                    Text("Accessibility permission to allow execution of AppleScript")
+                        .font(.callout)
+                        .foregroundStyle(.primary.opacity(0.5))
+                }
+
+                HStack(alignment: .top, spacing: 20) {
+                    Image(systemName: "gearshape.2")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .foregroundStyle(.primary.opacity(0.5))
+                    Text("Automation permission to perform delete actions via Finder")
+                        .font(.callout)
+                        .foregroundStyle(.primary.opacity(0.5))
+                }
+
+            }
+            .padding()
+        }
+        .padding(.horizontal, 5)
+    }
+}
+
+
 
 // Animated Button
 public struct AniButton: View {

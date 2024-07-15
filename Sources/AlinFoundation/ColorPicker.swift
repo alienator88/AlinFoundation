@@ -63,7 +63,7 @@ public struct ColorButtonView: View {
     }
     
     private func updateHexCode() {
-        themeManager.hexCode = themeManager.pickerColor.toHex() ?? "#FFFFFF"
+        themeManager.hexCode = themeManager.pickerColor.toHex()
     }
 }
 

@@ -173,8 +173,9 @@ struct PermissionsListView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Spacer()
-                Text("Permissions")
+                Text("Permission Status")
                     .font(.title2)
+//                InfoButtonPerms()
                 Spacer()
             }
 
@@ -190,7 +191,7 @@ struct PermissionsListView: View {
                     Button("Open") {
                         openSettingsForPermission(permission)
                     }
-                    .buttonStyle(.plain)
+//                    .buttonStyle(.plain)
                     //                    .controlSize(.small)
                 }
                 .padding(5)
