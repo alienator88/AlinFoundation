@@ -20,7 +20,7 @@ public struct SimpleButtonStyle: ButtonStyle {
     let padding: CGFloat
     let rotate: Bool
 
-    init(icon: String, iconFlip: String = "", label: String = "", help: String, color: Color = .primary, size: CGFloat = 20, padding: CGFloat = 5, rotate: Bool = false) {
+    public init(icon: String, iconFlip: String = "", label: String = "", help: String, color: Color = .primary, size: CGFloat = 20, padding: CGFloat = 5, rotate: Bool = false) {
         self.icon = icon
         self.iconFlip = iconFlip
         self.label = label
@@ -101,7 +101,7 @@ public struct InfoButton: View {
     let warning: Bool
     let edge: Edge
 
-    init(text: String, color: Color = .primary, label: String = "", warning: Bool = false, edge: Edge = .bottom) {
+    public init(text: String, color: Color = .primary, label: String = "", warning: Bool = false, edge: Edge = .bottom) {
         self.text = text
         self.color = color
         self.label = label
