@@ -12,7 +12,6 @@ import Combine
 public class Updater: ObservableObject {
     @Published public var updateAvailable: Bool = false
     @Published public var showSheet: Bool = false
-    @Published public var showSheetSettings: Bool = false
     @Published public var releases: [Release] = []
     @Published public var progressBar: (String, Double) = ("", 0.0)
     @Published public var nextUpdateDate: Date {
@@ -61,10 +60,6 @@ public class Updater: ObservableObject {
             .assign(to: \.showSheet, on: self)
             .store(in: &cancellables)
 
-        updaterService.$showSheetSettings
-            .assign(to: \.showSheetSettings, on: self)
-            .store(in: &cancellables)
-
         updaterService.$progressBar
             .assign(to: \.progressBar, on: self)
             .store(in: &cancellables)
@@ -72,6 +67,10 @@ public class Updater: ObservableObject {
 
     public func checkForUpdates(showSheet: Bool = true, checkUpdate: Bool = true) {
         updaterService.loadGithubReleases(showSheet: showSheet, checkUpdate: checkUpdate)
+    }
+
+    public func checkReleaseNotes() {
+        updaterService.checkReleaseNotes()
     }
 
     public func downloadUpdate() {
@@ -85,7 +84,7 @@ public class Updater: ObservableObject {
 
     public func checkAndUpdateIfNeeded() {
         guard updateFrequency != .none else {
-            self.checkForUpdates(showSheet: false, checkUpdate: false)
+            self.checkReleaseNotes()
             print("Updater: frequency set to never, skipping update check")
             return
         }
@@ -97,7 +96,7 @@ public class Updater: ObservableObject {
             print("Updater: performing update check")
             setNextUpdateDate()
         } else {
-            self.checkForUpdates(showSheet: false, checkUpdate: false)
+            self.checkReleaseNotes()
             print("Updater: next update date is in the future, skipping (\(formattedDate(nextUpdateDate)))")
         }
     }

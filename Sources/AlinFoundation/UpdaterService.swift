@@ -12,7 +12,6 @@ class UpdaterService: ObservableObject {
     @Published var releases: [Release] = []
     @Published var updateAvailable: Bool = false
     @Published var showSheet: Bool = false
-    @Published var showSheetSettings: Bool = false
     @Published var progressBar: (String, Double) = ("", 0.0)
 
     private let owner: String
@@ -23,6 +22,23 @@ class UpdaterService: ObservableObject {
         self.owner = owner
         self.repo = repo
         self.token = token
+    }
+
+    func checkReleaseNotes() {
+        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
+        var request = URLRequest(url: url)
+        if !token.isEmpty {
+            request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
+        }
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self, let data = data else { return }
+
+            if let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) {
+                DispatchQueue.main.async {
+                    self.releases = Array(decodedResponse.prefix(3))
+                }
+            }
+        }.resume()
     }
 
     func loadGithubReleases(showSheet: Bool, checkUpdate: Bool) {
@@ -50,7 +66,6 @@ class UpdaterService: ObservableObject {
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
         updateAvailable = latestRelease.tag_name > currentVersion
         self.showSheet = showSheet
-        self.showSheetSettings = showSheet
     }
 
     func downloadUpdate() {
