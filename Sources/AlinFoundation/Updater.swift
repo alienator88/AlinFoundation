@@ -85,6 +85,7 @@ public class Updater: ObservableObject {
 
     public func checkAndUpdateIfNeeded() {
         guard updateFrequency != .none else {
+            self.checkForUpdates(showSheet: false)
             print("Updater: frequency set to never, skipping update check")
             return
         }
@@ -97,6 +98,7 @@ public class Updater: ObservableObject {
             self.checkForUpdates()
             setNextUpdateDate()
         } else {
+            self.checkForUpdates(showSheet: false)
             print("Updater: next update date is in the future, skipping (\(formattedDate(nextUpdateDate)))")
         }
     }
