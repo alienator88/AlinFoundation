@@ -1,5 +1,5 @@
 //
-//  GitHubUpdater.swift
+//  Updater.swift
 //  
 //
 //  Created by Alin Lupascu on 7/8/24.
@@ -9,7 +9,7 @@
 import SwiftUI
 import Combine
 
-public class GitHubUpdater: ObservableObject {
+public class Updater: ObservableObject {
     @Published public var updateAvailable: Bool = false
     @Published public var showSheet: Bool = false
     @Published public var releases: [Release] = []

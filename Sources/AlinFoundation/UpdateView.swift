@@ -164,13 +164,13 @@ struct NoUpdateView: View {
 
 public struct UpdateButton: View {
     @ObservedObject var themeManager = ThemeManager.shared
-    @ObservedObject var updater: GitHubUpdater
+    @ObservedObject var updater: Updater
     @State private var showUpdateView = false
     @State private var hovered = false
     var dark: Bool
     var opacity: Double
 
-    public init(updater: GitHubUpdater, dark: Bool = false, opacity: Double = 1) {
+    public init(updater: Updater, dark: Bool = false, opacity: Double = 1) {
         self.updater = updater
         self.dark = dark
         self.opacity = opacity
@@ -193,10 +193,10 @@ public struct UpdateButton: View {
 
 
 public struct FrequencyView: View {
-    @ObservedObject var updater: GitHubUpdater
+    @ObservedObject var updater: Updater
     @State private var localNextUpdateDate: Date
 
-    public init(updater: GitHubUpdater) {
+    public init(updater: Updater) {
         self.updater = updater
         _localNextUpdateDate = State(initialValue: updater.nextUpdateDate)
     }
@@ -235,10 +235,10 @@ public struct FrequencyView: View {
 
 
 public struct ReleasesView: View {
-    @ObservedObject var updater: GitHubUpdater
+    @ObservedObject var updater: Updater
     @ObservedObject var themeManager = ThemeManager.shared
 
-    public init(updater: GitHubUpdater) {
+    public init(updater: Updater) {
         self.updater = updater
     }
 
