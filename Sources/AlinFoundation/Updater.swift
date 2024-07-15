@@ -79,19 +79,7 @@ public class Updater: ObservableObject {
     }
 
     public func getUpdateView() -> some View {
-        Group {
-            if updaterService.updateAvailable {
-                UpdateView(updaterService: updaterService)
-                    .edgesIgnoringSafeArea(.all)
-                    .material()
-                    .frame(width: 600, height: 300)
-            } else {
-                NoUpdateView(updaterService: updaterService)
-                    .edgesIgnoringSafeArea(.all)
-                    .material()
-                    .frame(width: 500, height: 200)
-            }
-        }
+        UpdateContentView(updaterService: updaterService)
     }
 
 

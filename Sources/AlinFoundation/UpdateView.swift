@@ -8,6 +8,31 @@
 
 import SwiftUI
 
+
+struct UpdateContentView: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    let updaterService: UpdaterService
+
+    var body: some View {
+        Group {
+            if updaterService.updateAvailable {
+                UpdateView(updaterService: updaterService)
+                    .edgesIgnoringSafeArea(.all)
+                    .material()
+                    .frame(width: 600, height: 300)
+            } else {
+                NoUpdateView(updaterService: updaterService)
+                    .edgesIgnoringSafeArea(.all)
+                    .material()
+                    .frame(width: 500, height: 200)
+            }
+        }
+        .environmentObject(themeManager)
+    }
+}
+
+
+
 struct UpdateView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var updaterService: UpdaterService
@@ -76,32 +101,9 @@ struct UpdateView: View {
 
             }
             .padding(.vertical)
-//            .padding(.bottom, isAppInCorrectDirectory ? 10 : 0)
         }
         .background(themeManager.pickerColor)
-//        .safeAreaInset(edge: .bottom, content: {
-//            if !isAppInCorrectDirectory {
-//                VStack(spacing: 0) {
-//                    Divider()
-//                    HStack {
-//                        Spacer()
-//                        Text("To avoid update issues, please move \(Bundle.main.name) to the \(isUserAdmin ? "/Applications" : "\(NSHomeDirectory())/Applications") folder before updating")
-//                            .font(.callout)
-//                            .opacity(0.5)
-//                        Spacer()
-//                    }
-//                    .padding(.vertical, 7)
-//                }
-//
-//
-//            }
-//        })
-//        .onAppear {
-//            checkAppDirectoryAndUserRole { result in
-//                isUserAdmin = result.isAdmin
-//                isAppInCorrectDirectory = result.isInCorrectDirectory
-//            }
-//        }
+
     }
 }
 
