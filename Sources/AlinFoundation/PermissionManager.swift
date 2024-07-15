@@ -15,12 +15,15 @@ public class PermissionManager: ObservableObject {
 
     public static let shared = PermissionManager()
 
-    @Published public var results: PermissionsCheckResults?
+    public var results: PermissionsCheckResults?
 
     private init() {
         checkAllPermissions()
     }
 
+    public var allPermissionsGranted: Bool {
+        return results?.allCheckedPermissionsGranted ?? false
+    }
 
     public enum PermissionType {
         case fullDiskAccess
@@ -36,6 +39,8 @@ public class PermissionManager: ObservableObject {
         public var allCheckedPermissionsGranted: Bool {
             return [fullDiskAccess, accessibility, automation].compactMap { $0 }.allSatisfy { $0 }
         }
+
+        
 
         public var grantedPermissions: [PermissionType] {
             var granted: [PermissionType] = []
@@ -130,11 +135,9 @@ public class PermissionManager: ObservableObject {
         }
     }
 
-    private func checkAllPermissions() {
+    public func checkAllPermissions() {
         checkPermissions(types: [.fullDiskAccess, .accessibility, .automation]) { [weak self] results in
-            DispatchQueue.main.async {
-                self?.results = results
-            }
+            self?.results = results
         }
     }
 }
@@ -158,7 +161,7 @@ public struct PermissionsView: View {
 
     public var body: some View {
         Group {
-            if let results = permissionManager.results, !results.allCheckedPermissionsGranted {
+            if let results = permissionManager.results, !permissionManager.allPermissionsGranted {
                 AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
                     showPermissionList = true
                 }, btnColor: Color.red, opacity: opacity, themeManager: themeManager)
@@ -178,11 +181,15 @@ struct PermissionsListView: View {
     @Binding var isPresented: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .center, spacing: 10) {
             HStack {
                 Spacer()
                 Text("Permission Status")
                     .font(.title2)
+//                Button("Refresh") {
+//                    permissionManager.checkAllPermissions()
+//                }
+
 //                InfoButtonPerms()
                 Spacer()
             }
@@ -205,18 +212,20 @@ struct PermissionsListView: View {
                 }
             }
 
-            HStack {
-                Spacer()
-                Button("Close") {
-                    dismiss()
-                }
-                Spacer()
+            Divider()
+
+            Text("Restart \(Bundle.main.name) for changes to take effect").font(.footnote).opacity(0.5)
+
+
+            Button("Close") {
+                dismiss()
             }
+
 
         }
         .padding()
         .background(themeManager.pickerColor)
-        .frame(width: 250)
+        .frame(width: 300)
     }
 
     private func permissionName(for permission: PermissionManager.PermissionType) -> String {

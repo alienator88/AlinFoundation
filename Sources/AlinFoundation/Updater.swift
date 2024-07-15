@@ -37,12 +37,16 @@ public class Updater: ObservableObject {
 
     public init(owner: String, repo: String, token: String = "") {
         self.updaterService = UpdaterService(owner: owner, repo: repo, token: token)
-
         let storedInterval = defaults.double(forKey: "alinfoundation.updater.nextUpdateDate")
-        self.nextUpdateDate = Date(timeIntervalSinceReferenceDate: storedInterval)
+        if storedInterval != 0.0 {
+            self.nextUpdateDate = Date(timeIntervalSinceReferenceDate: storedInterval)
+        } else {
+            self.nextUpdateDate = Date()
+        }
 
         if let rawValue = defaults.string(forKey: "alinfoundation.updater.updateFrequency"),
            let frequency = UpdateFrequency(rawValue: rawValue) {
+            print(frequency)
             self.updateFrequency = frequency
         } else {
             self.updateFrequency = .daily
@@ -63,10 +67,12 @@ public class Updater: ObservableObject {
         updaterService.$progressBar
             .assign(to: \.progressBar, on: self)
             .store(in: &cancellables)
+
+        updaterService.setUpdater(self)
     }
 
-    public func checkForUpdates(showSheet: Bool = true, checkUpdate: Bool = true) {
-        updaterService.loadGithubReleases(showSheet: showSheet, checkUpdate: checkUpdate)
+    public func checkForUpdates(showSheet: Bool = true) {
+        updaterService.loadGithubReleases(showSheet: showSheet)
     }
 
     public func checkReleaseNotes() {
@@ -94,7 +100,7 @@ public class Updater: ObservableObject {
 //        if now <= nextUpdateDate { //MARK: Debugging
         if now >= nextUpdateDate {
             print("Updater: performing update check")
-            setNextUpdateDate()
+            self.checkForUpdates(showSheet: false)
         } else {
             self.checkReleaseNotes()
             print("Updater: next update date is in the future, skipping (\(formattedDate(nextUpdateDate)))")

@@ -13,7 +13,8 @@ class UpdaterService: ObservableObject {
     @Published var updateAvailable: Bool = false
     @Published var showSheet: Bool = false
     @Published var progressBar: (String, Double) = ("", 0.0)
-
+    weak var updater: Updater?
+    
     private let owner: String
     private let repo: String
     private let token: String
@@ -22,6 +23,10 @@ class UpdaterService: ObservableObject {
         self.owner = owner
         self.repo = repo
         self.token = token
+    }
+
+    func setUpdater(_ updater: Updater) {
+        self.updater = updater
     }
 
     func checkReleaseNotes() {
@@ -41,7 +46,7 @@ class UpdaterService: ObservableObject {
         }.resume()
     }
 
-    func loadGithubReleases(showSheet: Bool, checkUpdate: Bool) {
+    func loadGithubReleases(showSheet: Bool) {
         let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
         var request = URLRequest(url: url)
         if !token.isEmpty {
@@ -53,9 +58,7 @@ class UpdaterService: ObservableObject {
             if let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) {
                 DispatchQueue.main.async {
                     self.releases = Array(decodedResponse.prefix(3))
-                    if checkUpdate {
-                        self.checkForUpdate(showSheet: showSheet)
-                    }
+                    self.checkForUpdate(showSheet: showSheet)
                 }
             }
         }.resume()
@@ -65,7 +68,9 @@ class UpdaterService: ObservableObject {
         guard let latestRelease = releases.first else { return }
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
         updateAvailable = latestRelease.tag_name > currentVersion
-        self.showSheet = showSheet
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.showSheet = showSheet
+        }
     }
 
     func downloadUpdate() {
@@ -152,6 +157,7 @@ class UpdaterService: ObservableObject {
             DispatchQueue.main.async {
                 self.progressBar.0 = "Update completed"
                 self.progressBar.1 = 1.0
+                self.updater?.setNextUpdateDate()
             }
 
         } catch {

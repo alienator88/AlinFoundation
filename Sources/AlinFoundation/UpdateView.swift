@@ -20,11 +20,14 @@ struct UpdateContentView: View {
                     .edgesIgnoringSafeArea(.all)
                     .material()
                     .frame(width: 600, height: 300)
+                    .background(themeManager.pickerColor)
+
             } else {
                 NoUpdateView(updaterService: updaterService)
                     .edgesIgnoringSafeArea(.all)
                     .material()
                     .frame(width: 500, height: 200)
+                    .background(themeManager.pickerColor)
             }
         }
         .environmentObject(themeManager)
