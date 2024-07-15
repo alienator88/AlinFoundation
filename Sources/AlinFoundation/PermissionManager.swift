@@ -11,16 +11,17 @@ import SwiftUI
 
 //MARK: PermissionManager - check some permissions
 
-/// PermissionManager.checkPermissions(types: [.fullDiskAccess, .accessibility]) { results in
-///     if results.allCheckedPermissionsGranted {
-///         print("All requested permissions are granted")
-///     } else {
-///         print("Some permissions are missing")
-///         // Show the PermissionsNotificationView
-///     }
-/// }
+public class PermissionManager: ObservableObject {
 
-public struct PermissionManager {
+    public static let shared = PermissionManager()
+
+    @Published public var results: PermissionsCheckResults?
+
+    private init() {
+        checkAllPermissions()
+    }
+
+
     public enum PermissionType {
         case fullDiskAccess
         case accessibility
@@ -57,7 +58,7 @@ public struct PermissionManager {
         return Bundle.main.bundleId
     }
 
-    public static func checkPermissions(types: [PermissionType], completion: @escaping (PermissionsCheckResults) -> Void) {
+    public func checkPermissions(types: [PermissionType], completion: @escaping (PermissionsCheckResults) -> Void) {
         let dispatchGroup = DispatchGroup()
         var results = PermissionsCheckResults()
 
@@ -87,7 +88,7 @@ public struct PermissionManager {
 
 
 
-    private static func checkFullDiskAccess(completion: @escaping (Bool) -> Void) {
+    private func checkFullDiskAccess(completion: @escaping (Bool) -> Void) {
         DispatchQueue.global(qos: .background).async {
             let fileManager = FileManager.default
             let testFile = "/Library/Application Support/com.apple.TCC/TCC.db"
@@ -101,14 +102,14 @@ public struct PermissionManager {
 
 
 
-    private static func checkAccessibility() -> Bool {
+    private func checkAccessibility() -> Bool {
         let checkOptPrompt = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as NSString
         let options = [checkOptPrompt: false]
         let accessibilityEnabled = AXIsProcessTrustedWithOptions(options as CFDictionary)
         return accessibilityEnabled
     }
 
-    private static func checkAutomationPermission(completion: @escaping (Bool) -> Void) {
+    private func checkAutomationPermission(completion: @escaping (Bool) -> Void) {
         DispatchQueue.global(qos: .background).async {
             let script = NSAppleScript(source: "tell application \"Finder\" to return name of home")
             var error: NSDictionary?
@@ -128,6 +129,14 @@ public struct PermissionManager {
             }
         }
     }
+
+    private func checkAllPermissions() {
+        checkPermissions(types: [.fullDiskAccess, .accessibility, .automation]) { [weak self] results in
+            DispatchQueue.main.async {
+                self?.results = results
+            }
+        }
+    }
 }
 
 
@@ -135,29 +144,28 @@ public struct PermissionManager {
 
 public struct PermissionsView: View {
     @ObservedObject var themeManager = ThemeManager.shared
-    @Binding public var showNotification: Bool
+    @ObservedObject var permissionManager = PermissionManager.shared
     @State private var hovered: Bool = false
     @State private var showPermissionList = false
     @Environment(\.dismiss) var dismiss
-    let results: PermissionManager.PermissionsCheckResults
     let dark: Bool
     let opacity: Double
 
-    public init(showNotification: Binding<Bool>, results: PermissionManager.PermissionsCheckResults, dark: Bool = false, opacity: Double = 1) {
-        self._showNotification = showNotification
-        self.results = results
+    public init(dark: Bool = false, opacity: Double = 1) {
         self.dark = dark
         self.opacity = opacity
     }
 
     public var body: some View {
-        if showNotification {
-            AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
-                showPermissionList = true
-            }, btnColor: Color.red, opacity: opacity, themeManager: themeManager)
+        Group {
+            if let results = permissionManager.results, !results.allCheckedPermissionsGranted {
+                AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
+                    showPermissionList = true
+                }, btnColor: Color.red, opacity: opacity, themeManager: themeManager)
                 .sheet(isPresented: $showPermissionList) {
-                    PermissionsListView(isPresented: $showPermissionList, results: results)
+                    PermissionsListView(isPresented: $showPermissionList)
                 }
+            }
         }
     }
 
@@ -166,8 +174,8 @@ public struct PermissionsView: View {
 struct PermissionsListView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var themeManager = ThemeManager.shared
+    @ObservedObject var permissionManager = PermissionManager.shared
     @Binding var isPresented: Bool
-    let results: PermissionManager.PermissionsCheckResults
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -182,19 +190,19 @@ struct PermissionsListView: View {
 
             Divider()
 
-            ForEach(results.checkedPermissions, id: \.self) { permission in
-                HStack {
-                    Image(systemName: results.grantedPermissions.contains(permission) ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(results.grantedPermissions.contains(permission) ? .green : .red)
-                    Text(permissionName(for: permission))
-                    Spacer()
-                    Button("Open") {
-                        openSettingsForPermission(permission)
+            if let results = permissionManager.results {
+                ForEach(results.checkedPermissions, id: \.self) { permission in
+                    HStack {
+                        Image(systemName: results.grantedPermissions.contains(permission) ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundColor(results.grantedPermissions.contains(permission) ? .green : .red)
+                        Text(permissionName(for: permission))
+                        Spacer()
+                        Button("Open") {
+                            openSettingsForPermission(permission)
+                        }
                     }
-//                    .buttonStyle(.plain)
-                    //                    .controlSize(.small)
+                    .padding(5)
                 }
-                .padding(5)
             }
 
             HStack {
@@ -205,11 +213,6 @@ struct PermissionsListView: View {
                 Spacer()
             }
 
-//            Button("Close") {
-//                dismiss()
-//            }
-//            .buttonStyle(.borderless)
-//            .buttonStyle(SimpleButtonStyle(icon: "x.circle", help: "Close", size: 18, padding: 0))
         }
         .padding()
         .background(themeManager.pickerColor)
