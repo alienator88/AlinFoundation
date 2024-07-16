@@ -145,26 +145,21 @@ public class PermissionManager: ObservableObject {
 
 
 
-public struct PermissionsView: View {
+public struct PermissionsBadge: View {
     @ObservedObject var themeManager = ThemeManager.shared
     @ObservedObject var permissionManager = PermissionManager.shared
     @State private var hovered: Bool = false
     @State private var showPermissionList = false
     @Environment(\.dismiss) var dismiss
-    let dark: Bool
-    let opacity: Double
 
-    public init(dark: Bool = false, opacity: Double = 1) {
-        self.dark = dark
-        self.opacity = opacity
-    }
+    public init() {}
 
     public var body: some View {
         Group {
             if let results = permissionManager.results, !permissionManager.allPermissionsGranted {
                 AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
                     showPermissionList = true
-                }, btnColor: Color.red, opacity: opacity, themeManager: themeManager)
+                }, btnColor: Color.red, themeManager: themeManager)
                 .sheet(isPresented: $showPermissionList) {
                     PermissionsListView(isPresented: $showPermissionList)
                 }
@@ -193,7 +188,6 @@ struct PermissionsListView: View {
 //                InfoButtonPerms()
                 Spacer()
             }
-
 
             Divider()
 

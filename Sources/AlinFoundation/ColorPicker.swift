@@ -283,7 +283,7 @@ public struct ColorPickerSliderView: View {
     public func updatePickerColor() {
         themeManager.pickerColor = Color(.sRGB, red: red, green: green, blue: blue, opacity: 1)
         themeManager.pickerColor.luminanceDisplayMode()
-//        hexCode = themeManager.pickerColor.toHex() ?? "#FFFFFF"
+        themeManager.hexCode = themeManager.pickerColor.toHex()
     }
 
     public func setColorFrom(color: Color) {

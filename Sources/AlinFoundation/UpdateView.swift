@@ -167,24 +167,21 @@ struct NoUpdateView: View {
 }
 
 
-public struct UpdateButton: View {
+public struct UpdateBadge: View {
     @ObservedObject var themeManager = ThemeManager.shared
     @ObservedObject var updater: Updater
     @State private var showUpdateView = false
     @State private var hovered = false
-    var dark: Bool
-    var opacity: Double
 
-    public init(updater: Updater, dark: Bool = false, opacity: Double = 1) {
+
+    public init(updater: Updater) {
         self.updater = updater
-        self.dark = dark
-        self.opacity = opacity
     }
 
     public var body: some View {
         AlertNotification(label: updater.updateAvailable ? "Update Available" : "No Updates", icon: "arrow.down.app", buttonAction: {
             showUpdateView = true
-        }, btnColor: Color.green, opacity: opacity, themeManager: themeManager)
+        }, btnColor: Color.green, themeManager: themeManager)
         .onAppear {
             updater.checkForUpdates(showSheet: false)
         }
@@ -269,5 +266,70 @@ public struct ReleasesView: View {
                 .padding(5)
 
         }
+    }
+}
+
+
+
+//MARK: Features
+public struct FeatureBadge: View {
+    @ObservedObject var themeManager = ThemeManager.shared
+    @ObservedObject var updater: Updater
+    @State private var showFeatureView = false
+
+    public init(updater: Updater) {
+        self.updater = updater
+    }
+
+    public var body: some View {
+        AlertNotification(label: updater.announcementAvailable ? "New Announcement" : "No New Announcement", icon: "star", buttonAction: {
+            showFeatureView = true
+        }, btnColor: Color.blue, themeManager: themeManager)
+        .sheet(isPresented: $showFeatureView, content: {
+            updater.getAnnouncementView()
+        })
+    }
+}
+
+
+public struct FeatureView: View {
+    @ObservedObject var updater: Updater
+    @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.dismiss) var dismiss
+
+    public var body: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Spacer()
+                Text("Announcement")
+                    .font(.title)
+                    .bold()
+                Spacer()
+            }
+
+            Divider()
+
+            ScrollView() {
+                Text(updater.getAnnouncement())
+                    .font(.body)
+                    .multilineTextAlignment(.leading)
+                    .padding()
+            }
+            .frame(width: 500)
+            .frame(maxHeight: 400)
+
+
+            HStack(alignment: .center, spacing: 20) {
+                Button(action: {
+                    updater.markAnnouncementAsViewed()
+                    dismiss()
+                }) {
+                    Text("Close")
+                }
+            }
+            .padding(.vertical)
+        }
+        .padding()
+        .background(themeManager.pickerColor)
     }
 }

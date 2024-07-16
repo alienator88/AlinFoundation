@@ -344,6 +344,11 @@ public func formatByte(size: Int64) -> (human: String, byte: String) {
 
 }
 
+// Print callstack for troubleshooting
+public func printCallStack() {
+    print("\(Thread.callStackSymbols.joined(separator: "\n"))")
+}
+
 // Only process supported files
 public func isSupportedFileType(at path: String) -> Bool {
     let fileManager = FileManager.default
@@ -515,6 +520,13 @@ public extension FileManager {
     }
 }
 
+// --- Extend string to replace - and | with custom characters
+public extension String {
+    func announcementFormat() -> String {
+        return self.replacingOccurrences(of: "- ", with: "• ").replacingOccurrences(of: "|", with: "\n\n")
+    }
+}
+
 // Get average color from image
 public extension NSImage {
     var averageColor: NSColor? {
@@ -642,5 +654,20 @@ public extension Color {
     }
 }
 
+// Hex string to Color
+public extension String {
+    func hexToColor() -> Color {
+        var hex = self.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        if hex.count == 3 {
+            hex = hex.map { "\($0)\($0)" }.joined()
+        }
+        guard hex.count == 6, let intCode = Int(hex, radix: 16) else {
+            return Color.clear
+        }
+        let red = Double((intCode >> 16) & 0xFF) / 255.0
+        let green = Double((intCode >> 8) & 0xFF) / 255.0
+        let blue = Double(intCode & 0xFF) / 255.0
 
-
+        return Color(.sRGB, red: red, green: green, blue: blue, opacity: 1.0)
+    }
+}

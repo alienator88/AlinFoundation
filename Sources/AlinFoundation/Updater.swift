@@ -13,6 +13,7 @@ public class Updater: ObservableObject {
     @Published public var updateAvailable: Bool = false
     @Published public var showSheet: Bool = false
     @Published public var releases: [Release] = []
+    @Published public var announcementAvailable: Bool = false
     @Published public var progressBar: (String, Double) = ("", 0.0)
     @Published public var nextUpdateDate: Date {
         didSet {
@@ -20,6 +21,20 @@ public class Updater: ObservableObject {
         }
     }
 
+    private var lastViewedVersion: String {
+        get {
+            defaults.string(forKey: "alinfoundation.updater.lastViewedVersion") ?? ""
+        }
+        set {
+            defaults.set(newValue, forKey: "alinfoundation.updater.lastViewedVersion")
+        }
+    }
+    
+    private var announcement: String = ""
+    private var announcementChecked = false
+    private let owner: String
+    private let repo: String
+    private let token: String
     private let updaterService: UpdaterService
     private var cancellables: Set<AnyCancellable> = []
     private let defaults = UserDefaults.standard
@@ -36,6 +51,9 @@ public class Updater: ObservableObject {
     }
 
     public init(owner: String, repo: String, token: String = "") {
+        self.owner = owner
+        self.repo = repo
+        self.token = token
         self.updaterService = UpdaterService(owner: owner, repo: repo, token: token)
         let storedInterval = defaults.double(forKey: "alinfoundation.updater.nextUpdateDate")
         if storedInterval != 0.0 {
@@ -46,7 +64,6 @@ public class Updater: ObservableObject {
 
         if let rawValue = defaults.string(forKey: "alinfoundation.updater.updateFrequency"),
            let frequency = UpdateFrequency(rawValue: rawValue) {
-            print(frequency)
             self.updateFrequency = frequency
         } else {
             self.updateFrequency = .daily
@@ -137,4 +154,102 @@ public class Updater: ObservableObject {
 
 //        print("Final next update date: \(self.nextUpdateDate)")
     }
+
+    //MARK: Features
+    public func checkForAnnouncement(force: Bool = false) {
+
+        if !force && announcementChecked {
+            print("Skipping redundant feature check")
+            return
+        }
+
+        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/contents/features.json")!
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github.VERSION.raw", forHTTPHeaderField: "Accept")
+        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        if !token.isEmpty {
+            request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self else { return }
+
+            // Common logic to get the bundle version
+            let bundleVersion = Bundle.main.version
+
+            if let data = data {
+                do {
+                    let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+                    if let jsonDict = jsonObject as? [String: String] {
+                        if force {
+                            print("1: Forced check")
+                            let sortedKeys = jsonDict.keys.sorted { $0 > $1 }
+                            let allAnnouncement = sortedKeys.compactMap { key -> String? in
+                                if let announcementText = jsonDict[key] {
+                                    return "\(key)\n\n\(announcementText)"
+                                }
+                                return nil
+                            }.joined(separator: "\n\n\n")
+
+                            DispatchQueue.main.async {
+                                self.announcement = allAnnouncement.announcementFormat()
+                                self.announcementAvailable = true
+                            }
+                        } else if let announcementText = jsonDict[bundleVersion] {
+                            print("Announcement check for version \(bundleVersion)")
+                            DispatchQueue.main.async {
+                                self.announcement = "v\(bundleVersion)\n\n\(announcementText)".announcementFormat()
+                                self.announcementAvailable = force || (self.lastViewedVersion != bundleVersion)
+                            }
+                        } else {
+                            print("No announcement for this version")
+                            DispatchQueue.main.async {
+                                self.announcement = "No announcement available for this version.".announcementFormat()
+                                self.announcementAvailable = false
+                            }
+                        }
+                        self.announcementChecked = true
+                    } else {
+                        print("JSON is not a dictionary of strings")
+                        DispatchQueue.main.async {
+                            self.announcement = "No announcement available for this version.".announcementFormat()
+                            self.announcementAvailable = false
+                        }
+                    }
+                } catch {
+                    print("Error parsing features JSON from GitHub: \(error.localizedDescription)")
+                    DispatchQueue.main.async {
+                        self.announcement = "No announcement available for this version.".announcementFormat()
+                        self.announcementAvailable = false
+                    }
+                }
+            } else {
+                print("Error fetching features JSON from GitHub: \(error?.localizedDescription ?? "Unknown error")")
+            }
+        }.resume()
+    }
+
+
+
+
+    public func getAnnouncementView() -> some View {
+        FeatureView(updater: self)
+    }
+
+    public func markAnnouncementAsViewed() {
+        if let bundleVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+            lastViewedVersion = bundleVersion
+            announcementAvailable = false
+        }
+    }
+
+    public func resetAnnouncementAlert() {
+        checkForAnnouncement(force: true)
+    }
+
+    public func getAnnouncement() -> String {
+        return announcement
+    }
+
+    
 }

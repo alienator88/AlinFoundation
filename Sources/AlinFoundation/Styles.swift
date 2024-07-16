@@ -297,16 +297,14 @@ public struct AlertNotification: View {
     var icon: String
     var buttonAction: () -> Void
     var btnColor: Color
-    var opacity: Double
     @ObservedObject var themeManager: ThemeManager
     @State private var hovered = false
 
-    public init(label: String, icon: String, buttonAction: @escaping () -> Void, btnColor: Color, opacity: Double, themeManager: ThemeManager) {
+    public init(label: String, icon: String, buttonAction: @escaping () -> Void, btnColor: Color, themeManager: ThemeManager) {
         self.label = label
         self.icon = icon
         self.buttonAction = buttonAction
         self.btnColor = btnColor
-        self.opacity = opacity
         self.themeManager = themeManager
     }
 
