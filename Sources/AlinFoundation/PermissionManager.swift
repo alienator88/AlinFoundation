@@ -15,7 +15,7 @@ public class PermissionManager: ObservableObject {
 
     public static let shared = PermissionManager()
 
-    public var results: PermissionsCheckResults?
+    @Published public var results: PermissionsCheckResults?
 
     private init() {
         checkAllPermissions()
@@ -137,7 +137,9 @@ public class PermissionManager: ObservableObject {
 
     public func checkAllPermissions() {
         checkPermissions(types: [.fullDiskAccess, .accessibility, .automation]) { [weak self] results in
-            self?.results = results
+            DispatchQueue.main.async {
+                self?.results = results
+            }
         }
     }
 }
@@ -157,6 +159,7 @@ public struct PermissionsBadge: View {
     public var body: some View {
         Group {
             if let results = permissionManager.results, !permissionManager.allPermissionsGranted {
+
                 AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
                     showPermissionList = true
                 }, btnColor: Color.red, themeManager: themeManager)
@@ -181,11 +184,6 @@ struct PermissionsListView: View {
                 Spacer()
                 Text("Permission Status")
                     .font(.title2)
-//                Button("Refresh") {
-//                    permissionManager.checkAllPermissions()
-//                }
-
-//                InfoButtonPerms()
                 Spacer()
             }
 

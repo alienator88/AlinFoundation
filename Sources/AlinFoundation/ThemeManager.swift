@@ -56,10 +56,9 @@ public class ThemeManager: ObservableObject {
     let defaultColor = Color(.sRGB, red: 48.0 / 255.0, green: 53.0 / 255.0, blue: 67.0 / 255.0, opacity: 1.0)
 
     private init() {
-        self.previousColor = userDefaults.color(forKey: "alinfoundation.theme.previousColor") ?? .clear
+        self.previousColor = userDefaults.color(forKey: "alinfoundation.theme.previousColor") ?? defaultColor
         self.displayMode = DisplayMode(rawValue: userDefaults.integer(forKey: "alinfoundation.theme.displayMode")) ?? .system
         self.pickerColor = userDefaults.color(forKey: "alinfoundation.theme.pickerColor") ?? defaultColor
-        self.previousColor = defaultColor
         self.themeMode = ThemeMode(rawValue: userDefaults.string(forKey: "alinfoundation.theme.mode") ?? "custom") ?? .custom
     }
 

@@ -11,10 +11,16 @@ public class TokenManager {
 
     private let service: String
     private let account: String
+    private let repoUser: String
+    private let repoName: String
+    private let repoURL: String
 
-    public init(name: String, account: String? = nil) {
+    public init(name: String, account: String? = nil, repoUser: String, repoName: String) {
         self.service = name
         self.account = account ?? NSFullUserName()
+        self.repoUser = repoUser ?? ""
+        self.repoName = repoName ?? ""
+        self.repoURL = "https://api.github.com/repos/\(repoUser)/\(repoName)"
     }
 
     public func saveToken(_ token: String, completion: @escaping (Bool) -> Void) {
@@ -81,5 +87,29 @@ public class TokenManager {
         } else {
             completion(true)
         }
+    }
+
+    public func checkTokenValidity(token: String, completion: @escaping (Bool) -> Void) {
+        guard let url = URL(string: repoURL) else {
+            completion(false)
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
+
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(false)
+                return
+            }
+
+            if httpResponse.statusCode == 200 {
+                completion(true)
+            } else {
+                completion(false)
+            }
+        }.resume()
     }
 }
