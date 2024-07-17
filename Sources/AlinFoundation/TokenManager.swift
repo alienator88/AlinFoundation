@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class TokenManager {
+public class TokenManager: ObservableObject {
 
     private let service: String
     private let account: String
