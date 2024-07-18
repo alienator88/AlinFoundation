@@ -18,7 +18,7 @@ public class TokenManager: ObservableObject {
 
     @Published public var tokenValid: Bool = true
 
-    public init(service: String, account: String? = nil, repoUser: String, repoName: String) {
+    public init(service: String, account: String? = nil, repoUser: String? = nil, repoName: String? = nil) {
         self.service = service
         self.account = account ?? NSFullUserName()
         self.repoUser = repoUser ?? ""

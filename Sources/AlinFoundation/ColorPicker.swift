@@ -40,13 +40,15 @@ public struct ColorButtonView: View {
         }) {
             RoundedRectangle(cornerRadius: 5)
                 .fill(themeManager.pickerColor)
-                .frame(width: 22, height: 22)
+                .frame(width: 80, height: 30)
                 .overlay(
                     ZStack {
                         RoundedRectangle(cornerRadius: 5)
                             .strokeBorder(lineWidth: 0.8)
                             .foregroundStyle(themeManager.pickerColor.luminance())
                             .opacity(0.3)
+                        Text(themeManager.hexCode)
+                        
                     }
 
                 )

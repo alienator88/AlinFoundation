@@ -4,14 +4,14 @@
 
 ## Features
 
-- **Updater**: Allows seamless updates by checking the latest available versions from a specified public or private GitHub repository
+- **Updater**: Allows seamless updates by checking the latest available versions from a specified public or private GitHub repository. Works with the TokenManager below as well to load private GitHub API token from KeyChain app
+- **TokenManager**: Save passwords, keys and more to Keychain Access with encryption
 - **ColorPicker**: Minimalistic color picker that follows macOS interface guidelines
-- **Authorization**: Execute a sudo shell command, asking for permission from end-user
+- **ThemeManager**: Choose appearance modes like Auto, Light, Dark. Or choose custom to set a theme color using the color picker above
 - **PermissionsManager**: Check for permissions and show a view to manage these (Currently supports FDA, Accessibility, Automation)
+- **Authorization**: Execute a sudo shell command, asking for permission from end-user
 - **Utilities**: A multitude of functions and extensions
 - **Styles**: Some custom views, buttonStyles, etc.
-- **ThemeManager**: Choose appearance modes like Auto, Light, Dark. Or choose custom to set a theme color using the color picker
-- **TokenManager**: Save passwords, keys and more to Keychain Access with encryption
 
 
 
