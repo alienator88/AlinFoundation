@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 public class TokenManager: ObservableObject {
 
@@ -15,12 +16,20 @@ public class TokenManager: ObservableObject {
     private let repoName: String
     private let repoURL: String
 
-    public init(name: String, account: String? = nil, repoUser: String, repoName: String) {
-        self.service = name
+    @Published public var tokenValid: Bool = true
+
+    public init(service: String, account: String? = nil, repoUser: String, repoName: String) {
+        self.service = service
         self.account = account ?? NSFullUserName()
         self.repoUser = repoUser ?? ""
         self.repoName = repoName ?? ""
         self.repoURL = "https://api.github.com/repos/\(repoUser)/\(repoName)"
+    }
+
+    public func setTokenValidity(_ isValid: Bool) {
+        DispatchQueue.main.async {
+            self.tokenValid = isValid
+        }
     }
 
     public func saveToken(_ token: String, completion: @escaping (Bool) -> Void) {
@@ -111,5 +120,70 @@ public class TokenManager: ObservableObject {
                 completion(false)
             }
         }.resume()
+    }
+}
+
+
+public struct TokenBadge: View {
+    @ObservedObject var themeManager = ThemeManager.shared
+    var buttonAction: () -> Void
+
+    public init(buttonAction: @escaping () -> Void) {
+        self.buttonAction = buttonAction
+    }
+
+    public var body: some View {
+
+        AlertNotification(label: "Invalid Token", icon: "key", buttonAction: {
+            buttonAction()
+        }, btnColor: Color.purple, themeManager: themeManager)
+    }
+}
+
+
+public struct TokenValidationStatus: View {
+    var token: String
+    var isTokenValid: Bool?
+
+    public init(token: String, isTokenValid: Bool?) {
+        self.token = token
+        self.isTokenValid = isTokenValid
+    }
+
+    public var body: some View {
+        HStack {
+            Image(systemName: tokenImageName)
+                .foregroundColor(tokenColor)
+            Text(tokenStatusText)
+                .foregroundColor(tokenColor)
+            Spacer()
+        }
+        .frame(minWidth: 200)
+    }
+
+    private var tokenImageName: String {
+        if token.isEmpty || token.count < 40 {
+            return "exclamationmark.triangle"  // Indicates a warning or notice
+        } else {
+            return isTokenValid == true ? "checkmark.circle.fill" : "xmark.octagon.fill"
+        }
+    }
+
+    private var tokenColor: Color {
+        if token.isEmpty || token.count < 40 {
+            return .orange  // Orange for notice or warning
+        } else {
+            return isTokenValid == true ? .green : .red
+        }
+    }
+
+    private var tokenStatusText: String {
+        if token.isEmpty {
+            return "No valid token configured yet"
+        } else if token.count < 40 {
+            return "Invalid token length detected"
+        } else {
+            return isTokenValid == true ? "Token is validated" : "Token is not valid"
+        }
     }
 }

@@ -345,8 +345,32 @@ public func formatByte(size: Int64) -> (human: String, byte: String) {
 }
 
 // Print callstack for troubleshooting
-public func printCallStack() {
-    print("\(Thread.callStackSymbols.joined(separator: "\n"))")
+public func printCallStack(simple: Bool = true) {
+    if simple {
+        let callStack = Thread.callStackSymbols
+
+        // Ensure there are at least 3 lines in the call stack
+        guard callStack.count >= 3 else {
+            print("Not enough call stack information available.")
+            return
+        }
+
+        // Get the third line of the call stack
+        let originLine = callStack[2]
+
+        // Format and print the third call stack entry
+        let components = originLine.split(separator: " ", maxSplits: 4, omittingEmptySubsequences: true)
+        if components.count >= 5 {
+            let module = components[1]
+            let address = components[2]
+            let functionInfo = components[3...4].joined(separator: " ")
+            print("\nOrigin of the call:\n\n \(functionInfo)")
+        } else {
+            print("\nOrigin of the call:\n\n \(originLine)")
+        }
+    } else {
+        Thread.callStackSymbols.forEach{print($0)}
+    }
 }
 
 // Only process supported files

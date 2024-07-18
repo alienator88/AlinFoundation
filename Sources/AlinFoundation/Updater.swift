@@ -34,10 +34,11 @@ public class Updater: ObservableObject {
     private var announcementChecked = false
     private let owner: String
     private let repo: String
-    private let token: String
-    private let updaterService: UpdaterService
+    public var token: String = ""
+    private var updaterService: UpdaterService!
     private var cancellables: Set<AnyCancellable> = []
     private let defaults = UserDefaults.standard
+    public var tokenManager: TokenManager?
 
     public var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
@@ -50,11 +51,10 @@ public class Updater: ObservableObject {
         }
     }
 
-    public init(owner: String, repo: String, token: String = "") {
+    public init(owner: String, repo: String, tokenEnabled: Bool = false, service: String? = nil, account: String? = nil) {
         self.owner = owner
         self.repo = repo
-        self.token = token
-        self.updaterService = UpdaterService(owner: owner, repo: repo, token: token)
+
         let storedInterval = defaults.double(forKey: "alinfoundation.updater.nextUpdateDate")
         if storedInterval != 0.0 {
             self.nextUpdateDate = Date(timeIntervalSinceReferenceDate: storedInterval)
@@ -68,6 +68,43 @@ public class Updater: ObservableObject {
         } else {
             self.updateFrequency = .daily
         }
+
+        if tokenEnabled {
+            self.tokenManager = TokenManager(service: service ?? "\(Bundle.main.bundleId)", account: account ?? "GitHub-API-Token", repoUser: owner, repoName: repo)
+            loadToken()
+        } else {
+            initializeUpdaterService()
+        }
+    }
+
+    private func loadToken() {
+        tokenManager?.loadToken { [weak self] success in
+            guard let self = self else { return }
+            if success {
+                self.token = self.tokenManager?.loadToken { _ in } ?? ""
+                self.validateToken()
+            } else {
+                DispatchQueue.main.async {
+                    self.tokenManager?.setTokenValidity(false)
+                    self.initializeUpdaterService()
+                }
+            }
+        }
+    }
+
+    private func validateToken() {
+
+        tokenManager?.checkTokenValidity(token: token) { [weak self] isValid in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.tokenManager?.setTokenValidity(isValid)
+                self.initializeUpdaterService()
+            }
+        }
+    }
+
+    private func initializeUpdaterService() {
+        self.updaterService = UpdaterService(owner: owner, repo: repo, token: token)
 
         updaterService.$releases
             .assign(to: \.releases, on: self)
@@ -86,6 +123,12 @@ public class Updater: ObservableObject {
             .store(in: &cancellables)
 
         updaterService.setUpdater(self)
+
+        /// This will check for updates on load based on the update frequency
+        self.checkAndUpdateIfNeeded()
+
+        /// Get new features
+        self.checkForAnnouncement()
     }
 
     public func checkForUpdates(showSheet: Bool = true) {
@@ -159,11 +202,11 @@ public class Updater: ObservableObject {
     public func checkForAnnouncement(force: Bool = false) {
 
         if !force && announcementChecked {
-            print("Skipping redundant feature check")
+            print("Updater: Skipping redundant feature check")
             return
         }
 
-        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/contents/features.json")!
+        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/contents/announcements.json")!
         var request = URLRequest(url: url)
         request.setValue("application/vnd.github.VERSION.raw", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
@@ -182,7 +225,7 @@ public class Updater: ObservableObject {
                     let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
                     if let jsonDict = jsonObject as? [String: String] {
                         if force {
-                            print("1: Forced check")
+                            print("Updater: Forced check")
                             let sortedKeys = jsonDict.keys.sorted { $0 > $1 }
                             let allAnnouncement = sortedKeys.compactMap { key -> String? in
                                 if let announcementText = jsonDict[key] {
@@ -196,13 +239,13 @@ public class Updater: ObservableObject {
                                 self.announcementAvailable = true
                             }
                         } else if let announcementText = jsonDict[bundleVersion] {
-                            print("Announcement check for version \(bundleVersion)")
+                            print("Updater: Announcement check for version \(bundleVersion)")
                             DispatchQueue.main.async {
                                 self.announcement = "v\(bundleVersion)\n\n\(announcementText)".announcementFormat()
                                 self.announcementAvailable = force || (self.lastViewedVersion != bundleVersion)
                             }
                         } else {
-                            print("No announcement for this version")
+                            print("Updater: No announcement for this version")
                             DispatchQueue.main.async {
                                 self.announcement = "No announcement available for this version.".announcementFormat()
                                 self.announcementAvailable = false
@@ -210,21 +253,21 @@ public class Updater: ObservableObject {
                         }
                         self.announcementChecked = true
                     } else {
-                        print("JSON is not a dictionary of strings")
+                        print("Updater: JSON is not a dictionary of strings")
                         DispatchQueue.main.async {
                             self.announcement = "No announcement available for this version.".announcementFormat()
                             self.announcementAvailable = false
                         }
                     }
                 } catch {
-                    print("Error parsing features JSON from GitHub: \(error.localizedDescription)")
+                    print("Updater: Error parsing announcement JSON from GitHub: \(error.localizedDescription)")
                     DispatchQueue.main.async {
                         self.announcement = "No announcement available for this version.".announcementFormat()
                         self.announcementAvailable = false
                     }
                 }
             } else {
-                print("Error fetching features JSON from GitHub: \(error?.localizedDescription ?? "Unknown error")")
+                print("Updater: Error fetching announcement JSON from GitHub: \(error?.localizedDescription ?? "Unknown error")")
             }
         }.resume()
     }
