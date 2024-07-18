@@ -16,10 +16,11 @@
 
 
 ## Screenshots
-<img width="1053" alt="Screenshot 2024-07-11 at 9 34 29 PM" src="https://github.com/user-attachments/assets/60c106b8-52b6-4abe-8972-7c38e4ccd7e6">
-<img width="1053" alt="Screenshot 2024-07-11 at 9 34 53 PM" src="https://github.com/user-attachments/assets/ab098967-768a-424a-ae3f-10d4bfd97353">
-<img width="1053" alt="Screenshot 2024-07-11 at 9 38 38 PM" src="https://github.com/user-attachments/assets/9de34e30-81cc-44b8-870a-e493a61812c2">
-<img width="1053" alt="Screenshot 2024-07-11 at 9 38 43 PM" src="https://github.com/user-attachments/assets/79debb00-7ba2-46ef-b350-7bacf6f9797c"> 
+![Screenshot 2024-07-18 at 2 00 57 PM](https://github.com/user-attachments/assets/5c68da88-166b-4eb1-acc8-5f2f0497544c)
+![Screenshot 2024-07-18 at 2 01 02 PM](https://github.com/user-attachments/assets/82f204b3-ca81-4189-bb02-f493f94ac998)
+![Screenshot 2024-07-18 at 2 01 07 PM](https://github.com/user-attachments/assets/539f961e-5781-49d1-9cc4-280a2d2b28ad)
+![Screenshot 2024-07-18 at 2 01 18 PM](https://github.com/user-attachments/assets/f4545da8-1f2f-4c34-857d-78a86df57904)
+
 
 
 
@@ -55,29 +56,28 @@ import AlinFoundation
 
 @main
 struct FoundationTestingApp: App {
-    @StateObject private var updater = Updater(owner: "USERNAME", repo: "REPO", token: "") //MARK: If you enter an API token, you can access private repositories as long as the API token has full repo permissions
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var updater = Updater(owner: "USER", repo: "REPO")
     @StateObject private var themeManager = ThemeManager.shared
+    @StateObject private var permissionManager = PermissionManager.shared
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                /// Load theme manager in the environment
                 .environmentObject(themeManager)
-                /// Load updater in the environment
                 .environmentObject(updater)
+                .environmentObject(permissionManager)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
-                    /// Set background based on the theme manager color picker
                     themeManager.pickerColor
                 )
                 .onAppear{
-                    /// Set the appearance on load based on the user's mode selection
                     themeManager.setupAppearance()
                 }
-                /// Set the color scheme of the app to the Theme Manager
                 .preferredColorScheme(themeManager.displayMode.colorScheme)
         }
         .windowStyle(.hiddenTitleBar)
+
     }
 }
 ```
@@ -90,11 +90,13 @@ import AlinFoundation
 struct ContentView: View {
     @EnvironmentObject var updater: Updater
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var permissions: ThemeManager
+
     @Environment(\.colorScheme) var colorScheme
-    @State private var showNotification: Bool = false
     @State private var token: String = ""
     @State private var tokenStatus: String = ""
-    @State private var permissionResults: PermissionManager.PermissionsCheckResults?
+    @State var show = false
+    let tokenManager = TokenManager(service: Bundle.main.bundleId, account: "API-Token")
 
     var body: some View {
 
@@ -108,29 +110,47 @@ struct ContentView: View {
 
                 VStack(alignment: .leading, spacing: 15) {
 
-                    Text("Permissions Component").font(.title2)
+                    Text("Permissions Badge").font(.title2)
                     /// This shows a permission notification view if permissions are missing
-                    if let results = permissionResults {
-                        PermissionsView(showNotification: $showNotification, results: results, dark: false, opacity: 1)
+                    PermissionsBadge()
+                        .backgroundAF(opacity: 1)
+
+                    Divider()
+
+                    Text("Updater Badge").font(.title2)
+                    /// This will check for an update on appear of the button and show if there's one available or not in the label
+                    UpdateBadge(updater: updater)
+                        .backgroundAF(opacity: 1)
+
+
+                    Divider()
+
+                    Text("Token Badge").font(.title2)
+                    /// This will check if the token is valid
+                    if tokenManager.tokenValid {
+                        TokenBadge(buttonAction: {
+                            print("Show a token view")
+                        })
+                        .backgroundAF(opacity: 1)
                     }
 
-                    Divider()
 
-                    Text("Updater Component").font(.title2)
-                    /// This will check for an update on appear of the button and show if there's one available or not in the label
-                    updater.getUpdateButton(dark: false, opacity: 1)
-
-                    Divider()
-
-                    Text("Frequency Component").font(.title2)
+                    Text("Frequency").font(.title2)
                     /// This will allow the user to set how often to check for updates
-                    updater.getFrequencyView()
+                    FrequencyView(updater: updater)
+                        .backgroundAF(opacity: 1)
 
                     Divider()
 
-                    Text("Appearance Component").font(.title2)
+                    Text("Appearance").font(.title2)
                     /// Show appearance/theme mode changer
-                    ThemeSettingsView()
+                    ThemeSettingsView(opacity: 1)
+                        .backgroundAF(opacity: 1)
+
+                    Text("ColorPicker").font(.title2)
+                    /// Show a color picker
+                    ColorButtonView(themeManager: themeManager)
+                        .backgroundAF(opacity: 1)
 
                     Spacer()
                 }
@@ -144,47 +164,74 @@ struct ContentView: View {
 
             VStack(alignment: .leading, spacing: 20) {
 
-                Text("Updater Releases Component").font(.title)
+                Text("Updater Releases").font(.title2)
                 /// This will show the last 3 versions release notes
-                updater.getReleasesView()
+                ReleasesView(updater: updater)
                     .frame(height: 300)
-                    .background {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(themeManager.pickerColor.adjustBrightness())
-                    }
+                    .backgroundAF(opacity: 0.5)
 
                 Divider()
 
 
                 /// Create and store an encrypted token in Keychain Access
-                Text("TokenManager Component").font(.title2)
-                let tokenManager = TokenManager(name: "GitHub Token - Test")
+                Text("Token Manager").font(.title2)
+
                 HStack {
-                    TextField("Enter Token", text: $token)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    TextField(" Enter Token", text: $token)
+                        .textFieldStyle(.plain)
+                        .backgroundAF(opacity: 0.7)
                     Button("Create") {
                         // Save token
                         tokenManager.saveToken(token) { success in
                             if success {
-                                tokenStatus = "Token saved: \(token)"
+                                tokenStatus = "Token saved:\n\(token)"
                             } else {
-                                tokenStatus = "Failed to save token: \(token)"
+                                tokenStatus = token.isEmpty ? "Token cannot be empty" : "Failed to save token:\n\(token)"
                             }
                         }
                     }
+                    .buttonStyle(AFButtonStyle(image: "plus"))
+
                     Button("Load") {
                         // Load a token
-                        if let token = tokenManager.loadToken() {
-                            tokenStatus = "Loaded token: \(token)"
-                        } else {
-                            tokenStatus = "No token found: \(token)"
+                        var loadedToken = ""
+                        loadedToken = tokenManager.loadToken { success in
+                            if success {
+                                DispatchQueue.main.async {
+                                    token = loadedToken
+                                    tokenStatus = "Token loaded:\n\(token)"
+
+                                    tokenManager.checkTokenValidity(token: token) { success in
+                                        if success {
+                                            print("Token is good")
+                                        } else {
+                                            print("Token is bad")
+                                        }
+                                    }
+                                }
+                            } else {
+                                DispatchQueue.main.async {
+                                    tokenStatus = "No token found:\n\(token)"
+                                }
+                            }
                         }
+
                     }
+                    .buttonStyle(AFButtonStyle(image: "externaldrive"))
+
                     Button("Delete") {
                         // Delete a token
-                        tokenManager.deleteToken()
-                        tokenStatus = "Token deleted: \(token)"
+                        tokenManager.deleteToken() { success in
+                            if success {
+                                tokenStatus = "Token deleted:\n\(token)"
+                                token = ""
+                            } else {
+                                tokenStatus = token.isEmpty ? "Unable to delete empty token" : "Error deleting token:\n\(token)"
+                            }
+                        }
                     }
+                    .buttonStyle(AFButtonStyle(image: "minus"))
+
                 }
                 Text(tokenStatus)
 
@@ -195,12 +242,6 @@ struct ContentView: View {
             .onAppear {
                 /// This will check for updates on load based on the update frequency
                 updater.checkAndUpdateIfNeeded()
-
-                /// Check permissions on load
-                PermissionManager.checkPermissions(types: [.fullDiskAccess, .accessibility, .automation]) { results in
-                    self.permissionResults = results
-                    self.showNotification = !results.allCheckedPermissionsGranted
-                }
             }
             .sheet(isPresented: $updater.showSheet, content: {
                 /// This will show the update sheet based on the frequency check function only
