@@ -169,17 +169,6 @@ public func copyToClipboard(text: String) {
     pasteboard.setString(text, forType: .string)
 }
 
-// Check if a file is a symlink
-public func isSymlink(atPath path: URL) -> Bool {
-    do {
-        let _ = try path.checkResourceIsReachable()
-        let resourceValues = try path.resourceValues(forKeys: [.isSymbolicLinkKey])
-        return resourceValues.isSymbolicLink == true
-    } catch {
-        return false
-    }
-}
-
 // Convert icon to png so colors render correctly
 public func convertICNSToPNG(icon: NSImage, size: NSSize) -> NSImage? {
     // Resize the icon to the specified size
@@ -693,5 +682,19 @@ public extension String {
         let blue = Double(intCode & 0xFF) / 255.0
 
         return Color(.sRGB, red: red, green: green, blue: blue, opacity: 1.0)
+    }
+}
+
+
+// Check if a URL path is a symlink
+extension URL {
+    public func isSymlink() -> Bool {
+        do {
+            let _ = try self.checkResourceIsReachable()
+            let resourceValues = try self.resourceValues(forKeys: [.isSymbolicLinkKey])
+            return resourceValues.isSymbolicLink == true
+        } catch {
+            return false
+        }
     }
 }

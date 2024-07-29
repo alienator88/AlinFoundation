@@ -78,7 +78,7 @@ public class Updater: ObservableObject {
     }
 
     private func loadToken() {
-        tokenManager?.loadToken { [weak self] success in
+        _ = tokenManager?.loadToken { [weak self] success in
             guard let self = self else { return }
             if success {
                 self.token = self.tokenManager?.loadToken { _ in } ?? ""

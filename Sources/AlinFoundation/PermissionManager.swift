@@ -158,7 +158,7 @@ public struct PermissionsBadge: View {
 
     public var body: some View {
         Group {
-            if let results = permissionManager.results, !permissionManager.allPermissionsGranted {
+            if !permissionManager.allPermissionsGranted {
 
                 AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
                     showPermissionList = true
