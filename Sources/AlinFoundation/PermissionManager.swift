@@ -148,7 +148,6 @@ public class PermissionManager: ObservableObject {
 
 
 public struct PermissionsBadge: View {
-    @ObservedObject var themeManager = ThemeManager.shared
     @ObservedObject var permissionManager = PermissionManager.shared
     @State private var hovered: Bool = false
     @State private var showPermissionList = false
@@ -162,7 +161,7 @@ public struct PermissionsBadge: View {
 
                 AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
                     showPermissionList = true
-                }, btnColor: Color.red, themeManager: themeManager)
+                }, btnColor: Color.red)
                 .sheet(isPresented: $showPermissionList) {
                     PermissionsListView(isPresented: $showPermissionList)
                 }
@@ -174,7 +173,6 @@ public struct PermissionsBadge: View {
 
 struct PermissionsListView: View {
     @Environment(\.dismiss) var dismiss
-    @ObservedObject var themeManager = ThemeManager.shared
     @ObservedObject var permissionManager = PermissionManager.shared
     @Binding var isPresented: Bool
 
@@ -216,8 +214,8 @@ struct PermissionsListView: View {
 
         }
         .padding()
-        .background(themeManager.pickerColor)
         .frame(width: 300)
+        .material(.hudWindow)
     }
 
     private func permissionName(for permission: PermissionManager.PermissionType) -> String {

@@ -125,7 +125,6 @@ public class TokenManager: ObservableObject {
 
 
 public struct TokenBadge: View {
-    @ObservedObject var themeManager = ThemeManager.shared
     var buttonAction: () -> Void
 
     public init(buttonAction: @escaping () -> Void) {
@@ -136,7 +135,7 @@ public struct TokenBadge: View {
 
         AlertNotification(label: "Invalid Token", icon: "key", buttonAction: {
             buttonAction()
-        }, btnColor: Color.purple, themeManager: themeManager)
+        }, btnColor: Color.purple)
     }
 }
 

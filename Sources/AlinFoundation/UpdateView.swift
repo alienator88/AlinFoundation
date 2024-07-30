@@ -10,7 +10,6 @@ import SwiftUI
 
 
 struct UpdateContentView: View {
-    @EnvironmentObject var themeManager: ThemeManager
     let updaterService: UpdaterService
 
     var body: some View {
@@ -18,19 +17,16 @@ struct UpdateContentView: View {
             if updaterService.updateAvailable {
                 UpdateView(updaterService: updaterService)
                     .edgesIgnoringSafeArea(.all)
-                    .material()
+                    .material(.hudWindow)
                     .frame(width: 600, height: 300)
-                    .background(themeManager.pickerColor)
 
             } else {
                 NoUpdateView(updaterService: updaterService)
                     .edgesIgnoringSafeArea(.all)
-                    .material()
+                    .material(.hudWindow)
                     .frame(width: 500, height: 200)
-                    .background(themeManager.pickerColor)
             }
         }
-        .environmentObject(themeManager)
     }
 }
 
@@ -39,7 +35,6 @@ struct UpdateContentView: View {
 struct UpdateView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var updaterService: UpdaterService
-    @EnvironmentObject var themeManager: ThemeManager
     @State private var isAppInCorrectDirectory: Bool = true
     @State private var isUserAdmin: Bool = true
 
@@ -105,7 +100,6 @@ struct UpdateView: View {
             }
             .padding(.vertical)
         }
-        .background(themeManager.pickerColor)
 
     }
 }
@@ -115,7 +109,6 @@ struct UpdateView: View {
 struct NoUpdateView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var updaterService: UpdaterService
-    @EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
         VStack(spacing: 0) {
@@ -161,14 +154,12 @@ struct NoUpdateView: View {
             .padding(.vertical)
 
         }
-        .background(themeManager.pickerColor)
 
     }
 }
 
 
 public struct UpdateBadge: View {
-    @ObservedObject var themeManager = ThemeManager.shared
     @ObservedObject var updater: Updater
     @State private var showUpdateView = false
     @State private var hovered = false
@@ -181,7 +172,7 @@ public struct UpdateBadge: View {
     public var body: some View {
         AlertNotification(label: updater.updateAvailable ? "Update Available" : "No Updates", icon: "arrow.down.app", buttonAction: {
             showUpdateView = true
-        }, btnColor: Color.green, themeManager: themeManager)
+        }, btnColor: Color.green)
         .onAppear {
             updater.checkForUpdates(showSheet: false)
         }
@@ -238,7 +229,6 @@ public struct FrequencyView: View {
 
 public struct ReleasesView: View {
     @ObservedObject var updater: Updater
-    @ObservedObject var themeManager = ThemeManager.shared
 
     public init(updater: Updater) {
         self.updater = updater
@@ -273,7 +263,6 @@ public struct ReleasesView: View {
 
 //MARK: Features
 public struct FeatureBadge: View {
-    @ObservedObject var themeManager = ThemeManager.shared
     @ObservedObject var updater: Updater
     @State private var showFeatureView = false
 
@@ -284,7 +273,7 @@ public struct FeatureBadge: View {
     public var body: some View {
         AlertNotification(label: updater.announcementAvailable ? "New Announcement" : "No New Announcement", icon: "star", buttonAction: {
             showFeatureView = true
-        }, btnColor: Color.blue, themeManager: themeManager)
+        }, btnColor: Color.blue)
         .sheet(isPresented: $showFeatureView, content: {
             updater.getAnnouncementView()
         })
@@ -294,7 +283,6 @@ public struct FeatureBadge: View {
 
 public struct FeatureView: View {
     @ObservedObject var updater: Updater
-    @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) var dismiss
 
     public var body: some View {
@@ -330,6 +318,7 @@ public struct FeatureView: View {
             .padding(.vertical)
         }
         .padding()
-        .background(themeManager.pickerColor)
+        .material(.hudWindow)
+
     }
 }

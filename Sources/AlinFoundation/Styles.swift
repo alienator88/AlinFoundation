@@ -301,22 +301,22 @@ public struct AlertNotification: View {
     var icon: String
     var buttonAction: () -> Void
     var btnColor: Color
-    @ObservedObject var themeManager: ThemeManager
+//    @ObservedObject var themeManager: ThemeManager
     @State private var hovered = false
+    @Environment(\.colorScheme) var colorScheme // Access the current color scheme
 
-    public init(label: String, icon: String, buttonAction: @escaping () -> Void, btnColor: Color, themeManager: ThemeManager) {
+    public init(label: String, icon: String, buttonAction: @escaping () -> Void, btnColor: Color) {
         self.label = label
         self.icon = icon
         self.buttonAction = buttonAction
         self.btnColor = btnColor
-        self.themeManager = themeManager
     }
 
     public var body: some View {
         HStack {
             Text(label)
                 .font(.title3)
-                .foregroundStyle(themeManager.displayMode == .dark ? .white : .black)
+                .foregroundStyle(colorScheme == .dark ? .white : .black)
                 .opacity(0.5)
                 .padding(.leading, 7)
 
