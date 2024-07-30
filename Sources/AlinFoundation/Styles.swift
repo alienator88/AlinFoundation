@@ -254,11 +254,15 @@ public struct AniButton: View {
                     .font(.system(size: 25))
                     .foregroundStyle(show ? .white : .white.opacity(0.5))
                     .contentTransition(.symbolEffect)
-            } else {
+            } else if #available(macOS 13.0, *) {
                 Image(systemName: show ? "paintbrush.fill" : "paintbrush")
                     .font(.system(size: 25))
                     .foregroundStyle(show ? .white : .white.opacity(0.5))
                     .contentTransition(.opacity)
+            } else {
+                Image(systemName: show ? "paintbrush.fill" : "paintbrush")
+                    .font(.system(size: 25))
+                    .foregroundStyle(show ? .white : .white.opacity(0.5))
             }
         }
         .frame(width: 150, height: 150)

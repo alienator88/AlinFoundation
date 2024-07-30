@@ -350,8 +350,8 @@ public func printCallStack(simple: Bool = true) {
         // Format and print the third call stack entry
         let components = originLine.split(separator: " ", maxSplits: 4, omittingEmptySubsequences: true)
         if components.count >= 5 {
-            let module = components[1]
-            let address = components[2]
+            let _ = components[1] // module
+            let _ = components[2] // address
             let functionInfo = components[3...4].joined(separator: " ")
             print("\nOrigin of the call:\n\n \(functionInfo)")
         } else {

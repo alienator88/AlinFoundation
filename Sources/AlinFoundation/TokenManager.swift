@@ -23,7 +23,7 @@ public class TokenManager: ObservableObject {
         self.account = account ?? NSFullUserName()
         self.repoUser = repoUser ?? ""
         self.repoName = repoName ?? ""
-        self.repoURL = "https://api.github.com/repos/\(repoUser)/\(repoName)"
+        self.repoURL = "https://api.github.com/repos/\(repoUser ?? "")/\(repoName ?? "")"
     }
 
     public func setTokenValidity(_ isValid: Bool) {
