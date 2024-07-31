@@ -80,44 +80,45 @@ class UpdaterService: ObservableObject {
         let fileManager = FileManager.default
         guard let latestRelease = self.releases.first,
               let asset = latestRelease.assets.first,
-              let url = URL(string: asset.browser_download_url) else { return }
-
+              let url = URL(string: asset.url) else { return }
         var request = URLRequest(url: url)
         request.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
+        if !token.isEmpty {
+            request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
+        }
 
-        let downloadTask = URLSession.shared.downloadTask(with: request) { localURL, urlResponse, error in
+
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data, error == nil else {
+                printOS("Error fetching asset: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+
             DispatchQueue.main.async {
-//                self.progressBar.0 = "UPDATER: Starting download of update file"
                 self.progressBar.1 = 0.2
             }
 
-            guard let localURL = localURL else { return }
-
-            let destinationURL = FileManager.default.temporaryDirectory.appendingPathComponent(asset.name)
+            let destinationURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads").appendingPathComponent(asset.name)
 
             do {
                 if fileManager.fileExists(atPath: destinationURL.path) {
                     try fileManager.removeItem(at: destinationURL)
                 }
 
-                DispatchQueue.main.async {
-//                    self.progressBar.0 = "UPDATER: File downloaded to temp directory"
-                    self.progressBar.1 = 0.3
-                }
-                try fileManager.moveItem(at: localURL, to: destinationURL)
+                try data.write(to: destinationURL)
 
                 DispatchQueue.main.async {
-//                    self.progressBar.0 = "UPDATER: File renamed using asset name"
                     self.progressBar.1 = 0.4
                 }
 
-                self.unzipAndReplace(downloadedFileURL: destinationURL.path)
-
+                 self.unzipAndReplace(downloadedFileURL: destinationURL.path)
             } catch {
-                print("Error moving downloaded file: \(error.localizedDescription)")
+                printOS("Error saving downloaded file: \(error.localizedDescription)")
             }
         }
-        downloadTask.resume()
+
+        task.resume()
     }
 
     private func unzipAndReplace(downloadedFileURL fileURL: String) {
@@ -139,13 +140,21 @@ class UpdaterService: ObservableObject {
             }
 
             let process = Process()
+//            let outputPipe = Pipe()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
             process.arguments = ["-xk", fileURL, appDirectory]
             process.standardOutput = FileHandle.nullDevice
             process.standardError = FileHandle.nullDevice
+//            let outputHandle = outputPipe.fileHandleForReading
 
             try process.run()
             process.waitUntilExit()
+
+
+//            let outputData = outputHandle.readDataToEndOfFile()
+//            if let outputString = String(data: outputData, encoding: .utf8) {
+//                print(outputString)
+//            }
 
             DispatchQueue.main.async {
 //                self.progressBar.0 = "UPDATER: Removing file from temp directory"
@@ -161,7 +170,7 @@ class UpdaterService: ObservableObject {
             }
 
         } catch {
-            print("Error updating the app: \(error)")
+            printOS("Error updating the app: \(error)")
         }
     }
 }
