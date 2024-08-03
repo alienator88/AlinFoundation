@@ -334,19 +334,23 @@ public func formatByte(size: Int64) -> (human: String, byte: String) {
 }
 
 // Alert for Trash
-public func showCustomAlert(title: String, message: String, style: NSAlert.Style, onOk: @escaping () -> Void) {
-    let alert = NSAlert()
-    alert.messageText = title
-    alert.informativeText = message
-    alert.alertStyle = style
+public func showCustomAlert(enabled: Bool = true, title: String, message: String, style: NSAlert.Style, onOk: @escaping () -> Void) {
+    if enabled {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = style
 
-    // Add "Okay" and "Cancel" buttons
-    alert.addButton(withTitle: "Okay")
-    alert.addButton(withTitle: "Cancel")
+        // Add "Okay" and "Cancel" buttons
+        alert.addButton(withTitle: "Okay")
+        alert.addButton(withTitle: "Cancel")
 
-    // Present the alert and execute closure if "Okay" is pressed
-    let response = alert.runModal()
-    if response == .alertFirstButtonReturn {
+        // Present the alert and execute closure if "Okay" is pressed
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            onOk()
+        }
+    } else {
         onOk()
     }
 }
