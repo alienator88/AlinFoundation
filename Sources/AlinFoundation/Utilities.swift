@@ -334,7 +334,7 @@ public func formatByte(size: Int64) -> (human: String, byte: String) {
 }
 
 // Alert for Trash
-public func showAlert(title: String, message: String, style: NSAlert.Style, onOk: @escaping () -> Void) {
+public func showCustomAlert(title: String, message: String, style: NSAlert.Style, onOk: @escaping () -> Void) {
     let alert = NSAlert()
     alert.messageText = title
     alert.informativeText = message
