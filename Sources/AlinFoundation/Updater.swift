@@ -32,8 +32,8 @@ public class Updater: ObservableObject {
     
     private var announcement: String = ""
     private var announcementChecked = false
-    private let owner: String
-    private let repo: String
+    @Published var owner: String
+    @Published var repo: String
     public var token: String = ""
     private var updaterService: UpdaterService!
     private var cancellables: Set<AnyCancellable> = []

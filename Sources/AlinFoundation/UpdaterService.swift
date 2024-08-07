@@ -15,8 +15,8 @@ class UpdaterService: ObservableObject {
     @Published var progressBar: (String, Double) = ("", 0.0)
     weak var updater: Updater?
     
-    private let owner: String
-    private let repo: String
+    public let owner: String
+    public let repo: String
     private let token: String
 
     init(owner: String, repo: String, token: String) {

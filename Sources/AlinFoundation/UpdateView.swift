@@ -66,7 +66,12 @@ struct UpdateView: View {
 
             Divider()
 
-            ReleaseNotesView(releaseNotes: updaterService.releases.first?.modifiedBody)
+            ReleaseNotesView(
+                release: updaterService.releases.first,
+                owner: updaterService.owner,
+                repo: updaterService.repo
+            )
+
 
             Spacer()
 
@@ -242,8 +247,29 @@ public struct ReleasesView: View {
                     ForEach(updater.releases, id: \.id) { release in
                         VStack(alignment: .leading) {
                             LabeledDivider(label: "\(release.tag_name)")
-                            Text(release.modifiedBody)
+
+                            if let attributedString = release.modifiedBody(owner: updater.owner, repo: updater.repo) {
+                                if let swiftAttributedString = try? AttributedString(attributedString) {
+                                    Text(swiftAttributedString)
+                                        .font(.body)
+                                        .multilineTextAlignment(.leading)
+                                        .padding(10)
+                                        .textSelection(.disabled)
+
+                                } else {
+                                    Text("Failed to display release notes")
+                                        .font(.body)
+                                        .foregroundColor(.red)
+                                        .padding(10)
+                                }
+                            } else {
+                                Text("Failed to display release notes")
+                                    .font(.body)
+                                    .foregroundColor(.red)
+                                    .padding(10)
+                            }
                         }
+
 
                     }
                 }
