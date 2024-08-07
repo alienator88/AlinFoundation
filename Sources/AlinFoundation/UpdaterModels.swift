@@ -76,7 +76,11 @@ public struct Release: Codable, Identifiable {
     private func headerAttributedString(from line: Substring, size: CGFloat) -> NSMutableAttributedString {
         let attributedLine = NSMutableAttributedString(string: String(line))
         attributedLine.addAttribute(.font, value: NSFont.systemFont(ofSize: size, weight: .bold), range: NSRange(location: 0, length: attributedLine.length))
-//        attributedLine.addAttribute(.foregroundColor, value: NSColor.black, range: NSRange(location: 0, length: attributedLine.length))
+        attributedLine.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: attributedLine.length))
+
+        let newLine = NSMutableAttributedString(string: "\n")
+        attributedLine.append(newLine)
+
         return attributedLine
     }
 
