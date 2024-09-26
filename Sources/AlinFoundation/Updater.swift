@@ -140,6 +140,10 @@ public class Updater: ObservableObject {
         updaterService.loadGithubReleases(showSheet: showSheet)
     }
 
+    public func checkForUpdatesForce() {
+        updaterService.loadGithubReleases(showSheet: false)
+    }
+
     public func checkReleaseNotes() {
         updaterService.checkReleaseNotes()
     }
