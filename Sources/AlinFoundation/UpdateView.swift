@@ -249,44 +249,61 @@ public struct ReleasesView: View {
     public var body: some View {
 
         VStack {
-            ScrollView {
-                VStack() {
-                    ForEach(updater.releases, id: \.id) { release in
-                        VStack(alignment: .leading) {
-                            LabeledDivider(label: "\(release.tag_name)")
+            if !updater.releases.isEmpty {
+                ScrollView {
+                    VStack() {
+                        ForEach(updater.releases, id: \.id) { release in
+                            VStack(alignment: .leading) {
+                                LabeledDivider(label: "\(release.tag_name)")
 
-                            if let attributedString = release.modifiedBody(owner: updater.owner, repo: updater.repo) {
-                                if let swiftAttributedString = try? AttributedString(attributedString) {
-                                    Text(swiftAttributedString)
-                                        .font(.body)
-                                        .multilineTextAlignment(.leading)
-                                        .padding(10)
-                                        .textSelection(.disabled)
+                                if let attributedString = release.modifiedBody(owner: updater.owner, repo: updater.repo) {
+                                    if let swiftAttributedString = try? AttributedString(attributedString) {
+                                        Text(swiftAttributedString)
+                                            .font(.body)
+                                            .multilineTextAlignment(.leading)
+                                            .padding(10)
+                                            .textSelection(.disabled)
 
+                                    } else {
+                                        Text("Failed to display release notes")
+                                            .font(.body)
+                                            .foregroundColor(.red)
+                                            .padding(10)
+                                    }
                                 } else {
                                     Text("Failed to display release notes")
                                         .font(.body)
                                         .foregroundColor(.red)
                                         .padding(10)
                                 }
-                            } else {
-                                Text("Failed to display release notes")
-                                    .font(.body)
-                                    .foregroundColor(.red)
-                                    .padding(10)
+
                             }
+
+
                         }
-
-
                     }
+                    .padding()
+                }
+            } else {
+                VStack {
+                    Text("No releases to display")
+                        .font(.title)
+                        .foregroundColor(.primary)
+                    Text("Updater frequency is set to Never")
+                        .font(.body)
+                        .foregroundColor(.primary.opacity(0.5))
                 }
                 .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
             }
 
-            Text("Showing last 3 releases")
-                .font(.callout)
-                .opacity(0.5)
-                .padding(5)
+            if !updater.releases.isEmpty {
+                Text("Showing last 3 releases")
+                    .font(.callout)
+                    .opacity(0.5)
+                    .padding(5)
+            }
 
         }
     }
