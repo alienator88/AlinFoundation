@@ -175,9 +175,15 @@ public struct UpdateBadge: View {
     }
 
     public var body: some View {
-        AlertNotification(label: updater.updateAvailable ? "Update Available" : "No Updates", icon: "arrow.down.app", buttonAction: {
-            showUpdateView = true
-        }, btnColor: Color.green)
+        AlertNotification(
+            label: updater.updateFrequency == .none ? "Updates Disabled" : (updater.updateAvailable ? "Update Available" : "No Updates"),
+            icon: "arrow.down.app",
+            buttonAction: {
+                showUpdateView = true
+            },
+            btnColor: Color.green,
+            disabled: updater.updateFrequency == .none
+        )
         .onAppear {
             updater.checkForUpdates(showSheet: false)
         }
@@ -222,6 +228,7 @@ public struct FrequencyView: View {
             }
             .onChange(of: updater.updateFrequency) { _ in
                 localNextUpdateDate = updater.nextUpdateDate
+                updater.checkForUpdates(showSheet: false)
             }
             .buttonStyle(.borderless)
         }

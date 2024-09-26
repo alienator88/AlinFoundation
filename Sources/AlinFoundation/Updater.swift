@@ -104,6 +104,7 @@ public class Updater: ObservableObject {
     }
 
     private func initializeUpdaterService() {
+
         self.updaterService = UpdaterService(owner: owner, repo: repo, token: token)
 
         updaterService.$releases
@@ -132,6 +133,10 @@ public class Updater: ObservableObject {
     }
 
     public func checkForUpdates(showSheet: Bool = true) {
+        guard updateFrequency != .none else { // Disable so no badge check happens when set to Never frequency
+            print("Updater: frequency set to never, skipping badge update check")
+            return
+        }
         updaterService.loadGithubReleases(showSheet: showSheet)
     }
 
@@ -150,7 +155,6 @@ public class Updater: ObservableObject {
 
     public func checkAndUpdateIfNeeded() {
         guard updateFrequency != .none else {
-            self.checkReleaseNotes()
             print("Updater: frequency set to never, skipping update check")
             return
         }
@@ -200,6 +204,11 @@ public class Updater: ObservableObject {
 
     //MARK: Features
     public func checkForAnnouncement(force: Bool = false) {
+
+        guard updateFrequency != .none else {
+            print("Updater: frequency set to never, skipping announcement check")
+            return
+        }
 
         if !force && announcementChecked {
             print("Updater: Skipping redundant feature check")

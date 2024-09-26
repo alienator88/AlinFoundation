@@ -194,7 +194,7 @@ struct PermissionsListView: View {
                             .foregroundColor(results.grantedPermissions.contains(permission) ? .green : .red)
                         Text(permissionName(for: permission))
                         Spacer()
-                        Button("Open") {
+                        Button("View") {
                             openSettingsForPermission(permission)
                         }
                     }

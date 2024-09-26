@@ -301,15 +301,18 @@ public struct AlertNotification: View {
     var icon: String
     var buttonAction: () -> Void
     var btnColor: Color
+    var disabled: Bool = false
+
 //    @ObservedObject var themeManager: ThemeManager
     @State private var hovered = false
     @Environment(\.colorScheme) var colorScheme // Access the current color scheme
 
-    public init(label: String, icon: String, buttonAction: @escaping () -> Void, btnColor: Color) {
+    public init(label: String, icon: String, buttonAction: @escaping () -> Void, btnColor: Color, disabled: Bool = false) {
         self.label = label
         self.icon = icon
         self.buttonAction = buttonAction
         self.btnColor = btnColor
+        self.disabled = disabled
     }
 
     public var body: some View {
@@ -329,7 +332,7 @@ public struct AlertNotification: View {
                         .scaledToFit()
                         .frame(width: 14, height: 14)
                         .foregroundStyle(.white)
-                    Text("Check")
+                    Text("View")
                         .foregroundStyle(.white)
                 }
                 .padding(3)
@@ -338,9 +341,12 @@ public struct AlertNotification: View {
             .padding(4)
             .background(btnColor)
             .clipShape(RoundedRectangle(cornerRadius: 6))
+            .disabled(disabled)
             .onHover { hover in
-                withAnimation {
-                    hovered = hover
+                if !disabled {
+                    withAnimation {
+                        hovered = hover
+                    }
                 }
             }
         }
