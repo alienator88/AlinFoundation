@@ -96,13 +96,33 @@ public class PermissionManager: ObservableObject {
     private func checkFullDiskAccess(completion: @escaping (Bool) -> Void) {
         DispatchQueue.global(qos: .background).async {
             let fileManager = FileManager.default
-            let testFile = "/Library/Application Support/com.apple.TCC/TCC.db"
-            let hasAccess = fileManager.isReadableFile(atPath: testFile)
+            let checkPath: String
 
-            DispatchQueue.main.async {
-                completion(hasAccess)
+            checkPath = "~/Library/Containers/com.apple.stocks"
+
+            let expandedCheckPath = NSString(string: checkPath).expandingTildeInPath
+
+            do {
+                // Try listing the contents of the directory
+                _ = try fileManager.contentsOfDirectory(atPath: expandedCheckPath)
+                DispatchQueue.main.async {
+                    completion(true)  // Full Disk Access is granted
+                }
+            } catch let error {
+                DispatchQueue.main.async {
+                    completion(false)  // Full Disk Access is denied
+                }
             }
         }
+//        DispatchQueue.global(qos: .background).async {
+//            let fileManager = FileManager.default
+//            let testFile = "/Library/Application Support/com.apple.TCC/TCC.db"
+//            let hasAccess = fileManager.isReadableFile(atPath: testFile)
+//
+//            DispatchQueue.main.async {
+//                completion(hasAccess)
+//            }
+//        }
     }
 
 
@@ -206,12 +226,14 @@ struct PermissionsListView: View {
 
             Text("Restart \(Bundle.main.name) for changes to take effect").font(.footnote).opacity(0.5)
 
-
-            Button("Close") {
-                dismiss()
+            HStack {
+                Button("Restart") {
+                    relaunchApp()
+                }
+                Button("Close") {
+                    dismiss()
+                }
             }
-
-
         }
         .padding()
         .frame(width: 300)
