@@ -209,7 +209,7 @@ public class Updater: ObservableObject {
     //MARK: Features
     public func checkForAnnouncement(force: Bool = false) {
 
-        guard updateFrequency != .none else {
+        guard updateFrequency != .none || force else {
             print("Updater: frequency set to never, skipping announcement check")
             return
         }
