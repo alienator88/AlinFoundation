@@ -68,7 +68,7 @@ class UpdaterService: ObservableObject {
         guard let latestRelease = releases.first else { return }
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
         updateAvailable = latestRelease.tag_name > currentVersion
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        DispatchQueue.main.async() {
             self.showSheet = showSheet
         }
     }
