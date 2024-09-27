@@ -418,8 +418,8 @@ public struct CustomBarProgressStyle: ProgressViewStyle {
 
 // Used for testing UI bounds. This adds a border around any view
 public extension View {
-    func bounds() -> some View {
-        self.border(Color.red, width: 1)
+    func bounds(color: Color = .red) -> some View {
+        self.border(color, width: 1)
     }
 }
 
