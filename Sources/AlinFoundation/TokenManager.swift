@@ -55,7 +55,7 @@ public class TokenManager: ObservableObject {
             if status == noErr {
                 completion(true)
             } else {
-                print("Error saving token to Keychain: \(status)")
+                printOS("Error saving token to Keychain: \(status)")
                 completion(false)
             }
         }
@@ -76,7 +76,7 @@ public class TokenManager: ObservableObject {
             completion(true)
             return token
         } else {
-            print("Error retrieving token from Keychain: \(status)")
+            printOS("Error retrieving token from Keychain: \(status)")
             completion(false)
             return ""
         }
@@ -91,7 +91,7 @@ public class TokenManager: ObservableObject {
 
         let status = SecItemDelete(query)
         if status != noErr {
-            print("Error deleting token from Keychain: \(status)")
+            printOS("Error deleting token from Keychain: \(status)")
             completion(false)
         } else {
             completion(true)

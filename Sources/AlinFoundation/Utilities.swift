@@ -252,16 +252,17 @@ public func isCurrentUserAdmin(completion: @escaping (Bool) -> Void) {
     do {
         try process.run()
     } catch {
-        print("Failed to execute command: \(error)")
+        printOS("Failed to execute command: \(error)")
         completion(false)
     }
 }
 
 // --- Extend print command to also output to the Console ---
-public func printOS(_ items: Any..., separator: String = " ", terminator: String = "\n") {
+public func printOS(_ items: Any..., separator: String = " ") {
     let message = items.map { "\($0)" }.joined(separator: separator)
     let log = OSLog(subsystem: Bundle.main.name, category: "Application")
     os_log("%@", log: log, type: .default, message)
+    Swift.print(message)
 }
 
 // Get size of files
@@ -287,7 +288,7 @@ public func totalSizeOnDisk(for paths: [URL]) -> (real: Int64, logical: Int64) {
                                 totalFileSize += Int64(fileSize)
                             }
                         } catch {
-                            print("Error getting file attributes for \(fileURL): \(error)")
+                            printOS("Error getting file attributes for \(fileURL): \(error)")
                         }
                     }
                 }
@@ -302,7 +303,7 @@ public func totalSizeOnDisk(for paths: [URL]) -> (real: Int64, logical: Int64) {
                         totalFileSize += Int64(fileSize)
                     }
                 } catch {
-                    print("Error getting file attributes for \(url): \(error)")
+                    printOS("Error getting file attributes for \(url): \(error)")
                 }
             }
         }
@@ -362,7 +363,7 @@ public func printCallStack(simple: Bool = true) {
 
         // Ensure there are at least 3 lines in the call stack
         guard callStack.count >= 3 else {
-            print("Not enough call stack information available.")
+            printOS("Not enough call stack information available.")
             return
         }
 
@@ -375,9 +376,9 @@ public func printCallStack(simple: Bool = true) {
             let _ = components[1] // module
             let _ = components[2] // address
             let functionInfo = components[3...4].joined(separator: " ")
-            print("\nOrigin of the call:\n\n \(functionInfo)")
+            printOS("\nOrigin of the call:\n\n \(functionInfo)")
         } else {
-            print("\nOrigin of the call:\n\n \(originLine)")
+            printOS("\nOrigin of the call:\n\n \(originLine)")
         }
     } else {
         Thread.callStackSymbols.forEach{print($0)}
@@ -476,7 +477,7 @@ public func copyToClipboard(_ text: String) {
 
 // --- Bundle extension ---
 public extension Bundle {
-
+    
     var name: String {
         func string(for key: String) -> String? {
             object(forInfoDictionaryKey: key) as? String

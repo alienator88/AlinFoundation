@@ -444,7 +444,7 @@ public struct LogViewDimensions: ViewModifier {
     private func updateSize(_ newSize: CGSize) {
         if size != newSize {
             size = newSize
-            print("View size changed: \(newSize)")
+            printOS("View size changed: \(newSize)")
         }
     }
 }
