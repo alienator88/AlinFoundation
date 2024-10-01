@@ -135,7 +135,7 @@ public class PermissionManager: ObservableObject {
     }
 
     private func checkAutomationPermission(completion: @escaping (Bool) -> Void) {
-        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.main.async {
             let script = NSAppleScript(source: "tell application \"Finder\" to return name of home")
             var error: NSDictionary?
             script?.executeAndReturnError(&error)
@@ -149,9 +149,8 @@ public class PermissionManager: ObservableObject {
                 hasPermission = true
             }
 
-            DispatchQueue.main.async {
-                completion(hasPermission)
-            }
+            completion(hasPermission)
+
         }
     }
 
