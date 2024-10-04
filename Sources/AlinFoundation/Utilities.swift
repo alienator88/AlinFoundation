@@ -80,28 +80,27 @@ public func runShell(_ command: String, completion: @escaping (String) -> Void) 
 /// }
 
 public func runAppleScript(_ command: String, completion: @escaping (Result<String, Error>) -> Void) {
-    // Create the AppleScript object from the command string
-    if let script = NSAppleScript(source: command) {
-        var errorDict: NSDictionary?
-        // Execute the script
-        let output = script.executeAndReturnError(&errorDict)
+    DispatchQueue.main.async {
+        // Create the AppleScript object from the command string
+        if let script = NSAppleScript(source: command) {
+            var errorDict: NSDictionary?
+            // Execute the script
+            let output = script.executeAndReturnError(&errorDict)
 
-        // Check for errors and return the result
-        if let error = errorDict as? [String: Any] {
-            DispatchQueue.main.async {
+            // Check for errors and return the result
+            if let error = errorDict as? [String: Any] {
                 completion(.failure(NSError(domain: "AppleScriptExecution", code: 0, userInfo: error)))
+
+            } else {
+                let outputString = output.stringValue ?? "No output"
+                completion(.success(outputString))
+
             }
         } else {
-            let outputString = output.stringValue ?? "No output"
-            DispatchQueue.main.async {
-                completion(.success(outputString))
-            }
-        }
-    } else {
-        DispatchQueue.main.async {
             completion(.failure(NSError(domain: "AppleScriptCreation", code: 1, userInfo: ["NSLocalizedDescription": "Failed to create NSAppleScript object."])))
         }
     }
+
 }
 
 
