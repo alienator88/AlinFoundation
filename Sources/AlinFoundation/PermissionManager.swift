@@ -182,7 +182,7 @@ public struct PermissionsBadge: View {
                     showPermissionList = true
                 }, btnColor: Color.red)
                 .sheet(isPresented: $showPermissionList) {
-                    PermissionsListView(isPresented: $showPermissionList)
+                    PermissionsListView()
                 }
             }
         }
@@ -190,12 +190,14 @@ public struct PermissionsBadge: View {
 
 }
 
-struct PermissionsListView: View {
+public struct PermissionsListView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var permissionManager = PermissionManager.shared
-    @Binding var isPresented: Bool
+//    @Binding var isPresented: Bool
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         VStack(alignment: .center, spacing: 10) {
             HStack {
                 Spacer()
