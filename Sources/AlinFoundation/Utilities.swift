@@ -256,11 +256,21 @@ public func isCurrentUserAdmin(completion: @escaping (Bool) -> Void) {
     }
 }
 
-// --- Extend print command to also output to the Console ---
-public func printOS(_ items: Any..., separator: String = " ") {
+// --- Extend print command to also output to the Console via Logger ---
+
+public struct LogCategory {
+    public static let general = "General"
+    public static let appLoad = "AppLoad"
+    public static let ui = "UI"
+    public static let updater = "Updater"
+    public static let fileSearch = "FileSearch"
+    public static let orphanedFileSearch = "OrphanedFileSearch"
+}
+
+public func printOS(_ items: Any..., separator: String = " ", category: String = LogCategory.general, logType: OSLogType = .error) {
     let message = items.map { "\($0)" }.joined(separator: separator)
-    let log = OSLog(subsystem: Bundle.main.name, category: "Application")
-    os_log("%@", log: log, type: .default, message)
+    let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.alienator88.fallback", category: category)
+    logger.log(level: logType, "\(message, privacy: .public)")
     Swift.print(message)
 }
 
