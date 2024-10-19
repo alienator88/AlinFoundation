@@ -11,6 +11,7 @@ import SwiftUI
 public struct Release: Codable, Identifiable {
     public let id: Int
     public let tag_name: String
+    public let name: String
     public let body: String
     public let assets: [Asset]
 
@@ -19,9 +20,12 @@ public struct Release: Codable, Identifiable {
         let lines = body.components(separatedBy: .newlines)
 
         for line in lines {
-            let attributedLine = handlePattern(line: line, owner: owner, repo: repo)
-            result.append(attributedLine)
-            result.append(NSAttributedString(string: "\n"))
+            if !line.isEmpty {
+                let attributedLine = handlePattern(line: line, owner: owner, repo: repo)
+                result.append(attributedLine)
+                result.append(NSAttributedString(string: "\n"))
+            }
+
         }
 
         return result
@@ -113,7 +117,7 @@ struct ReleaseNotesView: View {
                 Text(AttributedString(releaseNotes))
                     .font(.body)
                     .multilineTextAlignment(.leading)
-                    .padding(20)
+                    .padding()
                     .textSelection(.disabled)
             } else {
                 Text("No release information")

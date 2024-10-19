@@ -72,22 +72,28 @@ struct UpdateView: View {
                 repo: updaterService.repo
             )
 
-
             Spacer()
 
             VStack() {
                 ProgressView(value: updaterService.progressBar.1, total: 1.0, label: {Text(updaterService.progressBar.0)}, currentValueLabel: {Text("\(Int(updaterService.progressBar.1 * 100))%")})
             }
-            .padding()
+            .padding(.horizontal)
 
             HStack(alignment: .center, spacing: 10) {
 
                 if updaterService.progressBar.1 != 1.0 {
+
                     Button(action: {
                         updaterService.downloadUpdate()
                     }) {
                         Text("Update")
                             .padding(5)
+                    }
+                    .disabled(updaterService.releases.first?.name.lowercased() == "ignore")
+                    .contextMenu {
+                        Button("Force Update") {
+                            updaterService.downloadUpdate()
+                        }
                     }
                     Button(action: { dismiss() }) {
                         Text("Close")
@@ -102,8 +108,17 @@ struct UpdateView: View {
                     }
                 }
 
+
+
             }
             .padding(.vertical)
+
+            if updaterService.releases.first?.name.lowercased() == "ignore" {
+                Text("Please ignore this testing release, it will be removed shortly")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom)
+            }
         }
 
     }
@@ -175,21 +190,25 @@ public struct UpdateBadge: View {
     }
 
     public var body: some View {
-        AlertNotification(
-            label: updater.updateFrequency == .none ? "Updates Disabled" : (updater.updateAvailable ? "Update Available" : "No Updates"),
-            icon: "arrow.down.app",
-            buttonAction: {
-                showUpdateView = true
-            },
-            btnColor: Color.green,
-            disabled: updater.updateFrequency == .none
-        )
-        .onAppear {
-            updater.checkForUpdates(showSheet: false)
+
+        if updater.releases.first?.name.lowercased() != "ignore" {
+            AlertNotification(
+                label: updater.updateFrequency == .none ? "Updates Disabled" : (updater.updateAvailable ? "Update Available" : "No Updates"),
+                icon: "arrow.down.app",
+                buttonAction: {
+                    showUpdateView = true
+                },
+                btnColor: Color.green,
+                disabled: updater.updateFrequency == .none
+            )
+            .onAppear {
+                updater.checkForUpdates(showSheet: false)
+            }
+            .sheet(isPresented: $showUpdateView, content: {
+                updater.getUpdateView()
+            })
         }
-        .sheet(isPresented: $showUpdateView, content: {
-            updater.getUpdateView()
-        })
+
 
     }
 }

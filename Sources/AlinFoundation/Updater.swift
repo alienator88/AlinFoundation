@@ -164,7 +164,6 @@ public class Updater: ObservableObject {
 
         let now = Date()
 
-//        if now <= nextUpdateDate { //MARK: Debugging
         if now >= nextUpdateDate {
             printOS("Updater: performing update check")
             self.checkForUpdates(showSheet: false)
@@ -179,30 +178,21 @@ public class Updater: ObservableObject {
         let now = Date()
         let startOfToday = calendar.startOfDay(for: now)
 
-//        print("Current time: \(now)")
-//        print("Current update frequency: \(updateFrequency)")
-
         switch updateFrequency {
         case .daily:
-            self.nextUpdateDate = calendar.date(byAdding: .day, value: 1, to: startOfToday)!
-//            print("Setting daily update: \(self.nextUpdateDate)")
+            self.nextUpdateDate = calendar.date(byAdding: .second, value: 1, to: now)! /// Check on every launch
+//            self.nextUpdateDate = calendar.date(byAdding: .day, value: 1, to: startOfToday)! /// Check only once per day
         case .weekly:
             self.nextUpdateDate = calendar.date(byAdding: .day, value: 7, to: now)!
-//            print("Setting weekly update: \(self.nextUpdateDate)")
         case .monthly:
             self.nextUpdateDate = calendar.date(byAdding: .month, value: 1, to: now)!
-//            print("Setting monthly update: \(self.nextUpdateDate)")
         case .none:
             self.nextUpdateDate = .distantFuture
-//            print("Setting no updates")
         }
 
         if self.nextUpdateDate <= now {
             self.nextUpdateDate = calendar.date(byAdding: .second, value: 1, to: now)!
-//            print("Adjusted to future date: \(self.nextUpdateDate)")
         }
-
-//        print("Final next update date: \(self.nextUpdateDate)")
     }
 
     //MARK: Features
