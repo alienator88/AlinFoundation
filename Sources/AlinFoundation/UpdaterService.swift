@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import AppKit
 
 class UpdaterService: ObservableObject {
     @Published var releases: [Release] = []
@@ -73,7 +74,38 @@ class UpdaterService: ObservableObject {
         }
     }
 
+    func ensureAppIsInApplicationsFolder() -> Bool {
+        let appDirectory = Bundle.main.bundleURL.deletingLastPathComponent().path
+
+        // Check if the app is in /Applications or ~/Applications
+        let globalApplicationsPath = "/Applications"
+        let userApplicationsPath = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications").path
+
+        if appDirectory.hasPrefix(globalApplicationsPath) || appDirectory.hasPrefix(userApplicationsPath) {
+            return true
+        } else {
+                // Prompt user to move the app to the Applications folder
+                let alert = NSAlert()
+                alert.messageText = "Attention!"
+                alert.informativeText = "To avoid updater permission issues, please move \(Bundle.main.name) to your Applications folder before updating."
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "Okay")
+                alert.addButton(withTitle: "Ignore")
+
+                let response = alert.runModal()
+
+                // If the user chooses "Ignore", return true to proceed
+                return response == .alertSecondButtonReturn
+
+            return false
+        }
+    }
+
     func downloadUpdate() {
+        if !ensureAppIsInApplicationsFolder() {
+            return
+        }
+
         self.progressBar.0 = "Update in progress"
         self.progressBar.1 = 0.1
 
@@ -99,7 +131,9 @@ class UpdaterService: ObservableObject {
                 self.progressBar.1 = 0.2
             }
 
-            let destinationURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads").appendingPathComponent(asset.name)
+            let destinationURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+                .appendingPathComponent(Bundle.main.name)
+                .appendingPathComponent(asset.name)
 
             do {
                 if fileManager.fileExists(atPath: destinationURL.path) {
@@ -112,7 +146,8 @@ class UpdaterService: ObservableObject {
                     self.progressBar.1 = 0.4
                 }
 
-                 self.unzipAndReplace(downloadedFileURL: destinationURL.path)
+                self.unzipAndReplace(downloadedFileURL: destinationURL.path)
+
             } catch {
                 printOS("Error saving downloaded file: \(error.localizedDescription)", category: LogCategory.updater)
             }

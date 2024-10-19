@@ -101,9 +101,16 @@ struct UpdateView: View {
                     }
                 } else {
                     Button(action: {
-                        relaunchApp()
+                        relaunchApp(afterDelay: 1)
                     }) {
                         Text("Restart")
+                            .padding(5)
+                    }
+
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Text("Later")
                             .padding(5)
                     }
                 }
