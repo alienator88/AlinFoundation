@@ -125,12 +125,14 @@ class UpdaterService: ObservableObject {
         let appDirectory = Bundle.main.bundleURL.deletingLastPathComponent().path
         let appBundle = Bundle.main.bundleURL.path
         let fileManager = FileManager.default
+        printOS(appDirectory, appBundle)
 
         do {
             DispatchQueue.main.async {
 //                self.progressBar.0 = "UPDATER: Removing currently installed application bundle"
                 self.progressBar.1 = 0.5
             }
+            printOS("Remove app bundle")
 
             try fileManager.removeItem(atPath: appBundle)
 
@@ -138,6 +140,7 @@ class UpdaterService: ObservableObject {
 //                self.progressBar.0 = "UPDATER: Unzipping file to original install location"
                 self.progressBar.1 = 0.6
             }
+            printOS("Extract zip file")
 
             let process = Process()
 //            let outputPipe = Pipe()

@@ -422,7 +422,7 @@ public func ensureApplicationSupportFolderExists() {
 public func writeLog(string: String) {
     let fileManager = FileManager.default
     let home = fileManager.homeDirectoryForCurrentUser.path
-    let logFilePath = "\(home)/Downloads/log.txt"
+    let logFilePath = "\(home)/Downloads/pearcleaner.log"
 
     // Check if the log file exists, and create it if it doesn't
     if !fileManager.fileExists(atPath: logFilePath) {
