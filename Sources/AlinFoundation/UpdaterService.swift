@@ -126,6 +126,7 @@ class UpdaterService: ObservableObject {
         let appBundle = Bundle.main.bundleURL.path
         let fileManager = FileManager.default
         printOS(appDirectory, appBundle)
+        writeLog(string: "\(appDirectory)\n\(appBundle)")
 
         do {
             DispatchQueue.main.async {
@@ -133,6 +134,7 @@ class UpdaterService: ObservableObject {
                 self.progressBar.1 = 0.5
             }
             printOS("Remove app bundle")
+            writeLog(string: "Remove app bundle")
 
             try fileManager.removeItem(atPath: appBundle)
 
@@ -141,6 +143,7 @@ class UpdaterService: ObservableObject {
                 self.progressBar.1 = 0.6
             }
             printOS("Extract zip file")
+            writeLog(string: "Extract zip file")
 
             let process = Process()
 //            let outputPipe = Pipe()
@@ -174,6 +177,7 @@ class UpdaterService: ObservableObject {
 
         } catch {
             printOS("Error updating the app: \(error)")
+            writeLog(string: "Error updating the app: \(error)")
         }
     }
 }
