@@ -91,7 +91,7 @@ class UpdaterService: ObservableObject {
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data, error == nil else {
-                printOS("Error fetching asset: \(error?.localizedDescription ?? "Unknown error")")
+                printOS("Error fetching asset: \(error?.localizedDescription ?? "Unknown error")", category: LogCategory.updater)
                 return
             }
 
@@ -114,7 +114,7 @@ class UpdaterService: ObservableObject {
 
                  self.unzipAndReplace(downloadedFileURL: destinationURL.path)
             } catch {
-                printOS("Error saving downloaded file: \(error.localizedDescription)")
+                printOS("Error saving downloaded file: \(error.localizedDescription)", category: LogCategory.updater)
             }
         }
 
@@ -125,16 +125,12 @@ class UpdaterService: ObservableObject {
         let appDirectory = Bundle.main.bundleURL.deletingLastPathComponent().path
         let appBundle = Bundle.main.bundleURL.path
         let fileManager = FileManager.default
-        printOS(appDirectory, appBundle)
-        writeLog(string: "\(appDirectory)\n\(appBundle)")
 
         do {
             DispatchQueue.main.async {
 //                self.progressBar.0 = "UPDATER: Removing currently installed application bundle"
                 self.progressBar.1 = 0.5
             }
-            printOS("Remove app bundle")
-            writeLog(string: "Remove app bundle")
 
             try fileManager.removeItem(atPath: appBundle)
 
@@ -142,8 +138,6 @@ class UpdaterService: ObservableObject {
 //                self.progressBar.0 = "UPDATER: Unzipping file to original install location"
                 self.progressBar.1 = 0.6
             }
-            printOS("Extract zip file")
-            writeLog(string: "Extract zip file")
 
             let process = Process()
 //            let outputPipe = Pipe()
@@ -176,8 +170,7 @@ class UpdaterService: ObservableObject {
             }
 
         } catch {
-            printOS("Error updating the app: \(error)")
-            writeLog(string: "Error updating the app: \(error)")
+            printOS("Error replacing the app: \(error)", category: LogCategory.updater)
         }
     }
 }

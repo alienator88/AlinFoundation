@@ -133,7 +133,7 @@ public class Updater: ObservableObject {
 
     public func checkForUpdates(showSheet: Bool = true) {
         guard updateFrequency != .none else { // Disable so no badge check happens when set to Never frequency
-            printOS("Updater: frequency set to never, skipping badge update check")
+            printOS("Updater: frequency set to never, skipping badge update check", category: LogCategory.updater)
             return
         }
         updaterService.loadGithubReleases(showSheet: showSheet)
@@ -158,18 +158,18 @@ public class Updater: ObservableObject {
 
     public func checkAndUpdateIfNeeded() {
         guard updateFrequency != .none else {
-            printOS("Updater: frequency set to never, skipping update check")
+            printOS("Updater: frequency set to never, skipping update check", category: LogCategory.updater)
             return
         }
 
         let now = Date()
 
         if now >= nextUpdateDate {
-            printOS("Updater: performing update check")
+            printOS("Updater: performing update check", category: LogCategory.updater)
             self.checkForUpdates(showSheet: false)
         } else {
             self.checkReleaseNotes()
-            printOS("Updater: next update date is in the future, skipping (\(formattedDate(nextUpdateDate)))")
+            printOS("Updater: next update date is in the future, skipping (\(formattedDate(nextUpdateDate)))", category: LogCategory.updater)
         }
     }
 
@@ -199,12 +199,12 @@ public class Updater: ObservableObject {
     public func checkForAnnouncement(force: Bool = false) {
 
         guard updateFrequency != .none || force else {
-            printOS("Updater: frequency set to never, skipping announcement check")
+            printOS("Updater: frequency set to never, skipping announcement check", category: LogCategory.updater)
             return
         }
 
         if !force && announcementChecked {
-            printOS("Updater: skipping redundant feature check")
+            printOS("Updater: skipping redundant feature check", category: LogCategory.updater)
             return
         }
 
@@ -227,7 +227,7 @@ public class Updater: ObservableObject {
                     let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
                     if let jsonDict = jsonObject as? [String: String] {
                         if force {
-                            printOS("Updater: forced announcement check")
+                            printOS("Updater: forced announcement check", category: LogCategory.updater)
                             let sortedKeys = jsonDict.keys.sorted { $0 > $1 }
                             let allAnnouncement = sortedKeys.compactMap { key -> String? in
                                 if let announcementText = jsonDict[key] {
@@ -241,13 +241,13 @@ public class Updater: ObservableObject {
                                 self.announcementAvailable = true
                             }
                         } else if let announcementText = jsonDict[bundleVersion] {
-                            printOS("Updater: announcement check for version \(bundleVersion)")
+                            printOS("Updater: announcement check for version \(bundleVersion)", category: LogCategory.updater)
                             DispatchQueue.main.async {
                                 self.announcement = "v\(bundleVersion)\n\n\(announcementText)".announcementFormat()
                                 self.announcementAvailable = force || (self.lastViewedVersion != bundleVersion)
                             }
                         } else {
-                            printOS("Updater: no announcement for this version")
+                            printOS("Updater: no announcement for this version", category: LogCategory.updater)
                             DispatchQueue.main.async {
                                 self.announcement = "No announcement available for this version.".announcementFormat()
                                 self.announcementAvailable = false
@@ -255,21 +255,21 @@ public class Updater: ObservableObject {
                         }
                         self.announcementChecked = true
                     } else {
-                        printOS("Updater: json is not a dictionary of strings")
+                        printOS("Updater: json is not a dictionary of strings", category: LogCategory.updater)
                         DispatchQueue.main.async {
                             self.announcement = "No announcement available for this version.".announcementFormat()
                             self.announcementAvailable = false
                         }
                     }
                 } catch {
-                    printOS("Updater: error parsing announcement JSON from GitHub: \(error.localizedDescription)")
+                    printOS("Updater: error parsing announcement JSON from GitHub: \(error.localizedDescription)", category: LogCategory.updater)
                     DispatchQueue.main.async {
                         self.announcement = "No announcement available for this version.".announcementFormat()
                         self.announcementAvailable = false
                     }
                 }
             } else {
-                printOS("Updater: error fetching announcement JSON from GitHub: \(error?.localizedDescription ?? "Unknown error")")
+                printOS("Updater: error fetching announcement JSON from GitHub: \(error?.localizedDescription ?? "Unknown error")", category: LogCategory.updater)
             }
         }.resume()
     }
