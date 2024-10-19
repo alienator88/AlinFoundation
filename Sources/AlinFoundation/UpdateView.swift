@@ -18,7 +18,7 @@ struct UpdateContentView: View {
                 UpdateView(updaterService: updaterService)
                     .edgesIgnoringSafeArea(.all)
                     .material(.hudWindow)
-                    .frame(width: 600, height: 300)
+                    .frame(width: 600, height: 350)
 
             } else {
                 NoUpdateView(updaterService: updaterService)
@@ -237,7 +237,7 @@ public struct FrequencyView: View {
                 Text("\(Bundle.main.name) will check for updates")
                     .font(.callout)
 
-                if updater.updateFrequency != .none {
+                if updater.updateFrequency != .none && updater.updateFrequency != .daily {
                     Text("Next update check: \(formattedDate(localNextUpdateDate))")
                         .font(.footnote)
                         .opacity(0.5)

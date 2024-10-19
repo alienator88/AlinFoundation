@@ -61,9 +61,13 @@ public struct AFButtonStyle: ButtonStyle {
     @State private var hovered = false
     @State private var pressed = false
     var image: String
+    var fill: Color
+    var size: CGFloat
 
-    public init(image: String) {
+    public init(image: String, fill: Color = .blue, size: CGFloat = 30) {
         self.image = image
+        self.fill = fill
+        self.size = size
     }
 
     public func makeBody(configuration: Configuration) -> some View {
@@ -71,15 +75,15 @@ public struct AFButtonStyle: ButtonStyle {
             Rectangle()
                 .fill(.primary.opacity(0.1))
             Circle()
-                .frame(width: configuration.isPressed ? 50 : 0, height: configuration.isPressed ? 50 : 0)
-                .foregroundStyle(.blue)
+                .frame(width: configuration.isPressed ? size + 20 : 0, height: configuration.isPressed ? size + 20 : 0)
+                .foregroundStyle(fill)
             Image(systemName: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 15, height: 15)
+                .frame(width: size / 2, height: size / 2)
                 .foregroundColor(pressed ? .white : hovered ? .primary : .primary.opacity(0.7))
         }
-        .frame(width: 30, height: 30)
+        .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .contentShape(Rectangle())
         .animation(.easeInOut(duration: 0.3), value: configuration.isPressed)
