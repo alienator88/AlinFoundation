@@ -249,7 +249,7 @@ public struct FrequencyView: View {
 
             Picker("", selection: $updater.updateFrequency) {
                 ForEach(UpdateFrequency.allCases, id: \.self) { frequency in
-                    Text(frequency.rawValue).tag(frequency)
+                    Text(frequency.rawValue.localized()).tag(frequency)
                 }
             }
             .onChange(of: updater.updateFrequency) { _ in
