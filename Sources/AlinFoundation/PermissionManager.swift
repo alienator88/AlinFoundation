@@ -178,7 +178,7 @@ public struct PermissionsBadge: View {
         Group {
             if !permissionManager.allPermissionsGranted {
 
-                AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
+                AlertNotification(label: "Missing Permissions".localized(), icon: "lock", buttonAction: {
                     showPermissionList = true
                 }, btnColor: Color.red)
                 .sheet(isPresented: $showPermissionList) {
@@ -244,11 +244,11 @@ public struct PermissionsListView: View {
     private func permissionName(for permission: PermissionManager.PermissionType) -> String {
         switch permission {
         case .fullDiskAccess:
-            return "Full Disk Access"
+            return "Full Disk Access".localized()
         case .accessibility:
-            return "Accessibility"
+            return "Accessibility".localized()
         case .automation:
-            return "Automation"
+            return "Automation".localized()
         }
     }
 

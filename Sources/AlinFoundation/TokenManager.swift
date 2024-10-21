@@ -133,7 +133,7 @@ public struct TokenBadge: View {
 
     public var body: some View {
 
-        AlertNotification(label: "Invalid Token", icon: "key", buttonAction: {
+        AlertNotification(label: "Invalid Token".localized(), icon: "key", buttonAction: {
             buttonAction()
         }, btnColor: Color.purple)
     }
@@ -153,7 +153,7 @@ public struct TokenValidationStatus: View {
         HStack {
             Image(systemName: tokenImageName)
                 .foregroundColor(tokenColor)
-            Text(tokenStatusText)
+            Text(tokenStatusText.localized())
                 .foregroundColor(tokenColor)
             Spacer()
         }

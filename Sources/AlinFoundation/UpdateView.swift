@@ -49,7 +49,7 @@ struct UpdateView: View {
 
                 Spacer()
 
-                Text("\(updaterService.updateAvailable ? "Update Available 🥳" : "Completed 🚀")")
+                Text("\(updaterService.updateAvailable ? "Update Available 🥳".localized() : "Completed 🚀".localized())")
                     .font(.title2)
                     .bold()
                     .padding(.vertical, 7)
@@ -148,7 +148,7 @@ struct NoUpdateView: View {
 
                 Spacer()
 
-                Text("\(updaterService.progressBar.1 != 1.0 ? "No Update 😌" : "Completed 🚀")")
+                Text("\(updaterService.progressBar.1 != 1.0 ? "No Update 😌".localized() : "Completed 🚀".localized())")
                     .font(.title)
                     .bold()
                     .padding(.vertical, 5)
@@ -200,7 +200,7 @@ public struct UpdateBadge: View {
 
         if updater.releases.first?.name.lowercased() != "ignore" {
             AlertNotification(
-                label: updater.updateFrequency == .none ? "Updates Disabled" : (updater.updateAvailable ? "Update Available" : "No Updates"),
+                label: updater.updateFrequency == .none ? "Updates Disabled".localized() : (updater.updateAvailable ? "Update Available".localized() : "No Updates".localized()),
                 icon: "arrow.down.app",
                 buttonAction: {
                     showUpdateView = true
@@ -347,7 +347,7 @@ public struct FeatureBadge: View {
     }
 
     public var body: some View {
-        AlertNotification(label: updater.announcementAvailable ? "New Announcement" : "No New Announcement", icon: "star", buttonAction: {
+        AlertNotification(label: updater.announcementAvailable ? "New Announcement".localized() : "No New Announcement".localized(), icon: "star", buttonAction: {
             showFeatureView = true
         }, btnColor: Color.blue)
         .sheet(isPresented: $showFeatureView, content: {
