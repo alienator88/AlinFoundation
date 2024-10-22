@@ -482,9 +482,9 @@ public func copyToClipboard(_ text: String) {
 //MARK: ====================================================== EXTENSIONS ======================================================
 
 // Localize Text strings
-extension String {
+public extension String {
     /// Returns a localized version of the string using NSLocalizedString.
-    func localized(comment: String = "") -> String {
+    public func localized(comment: String = "") -> String {
         return NSLocalizedString(self, comment: comment)
     }
 }
