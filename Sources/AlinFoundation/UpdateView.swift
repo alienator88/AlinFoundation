@@ -81,7 +81,7 @@ struct UpdateView: View {
 
             HStack(alignment: .center, spacing: 10) {
 
-                if updaterService.progressBar.1 != 1.0 {
+                if updaterService.progressBar.1 == 0.0 {
 
                     Button(action: {
                         updaterService.downloadUpdate()
@@ -95,24 +95,18 @@ struct UpdateView: View {
                             updaterService.downloadUpdate()
                         }
                     }
-                    Button(action: { dismiss() }) {
-                        Text("Close")
-                            .padding(5)
-                    }
-                } else {
+                } else if updaterService.progressBar.1 == 1.0 {
                     Button(action: {
                         relaunchApp(afterDelay: 1)
                     }) {
                         Text("Restart")
                             .padding(5)
                     }
+                }
 
-                    Button(action: {
-                        dismiss()
-                    }) {
-                        Text("Later")
-                            .padding(5)
-                    }
+                Button(action: { dismiss() }) {
+                    Text("Close")
+                        .padding(5)
                 }
 
 
