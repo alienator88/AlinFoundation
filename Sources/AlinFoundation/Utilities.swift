@@ -352,8 +352,8 @@ public func showCustomAlert(enabled: Bool = true, title: String, message: String
         alert.alertStyle = style
 
         // Add "Okay" and "Cancel" buttons
-        alert.addButton(withTitle: "Okay")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: NSLocalizedString("Okay", comment: "Confirm action"))
+        alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel action"))
 
         // Present the alert and execute closure if "Okay" is pressed
         let response = alert.runModal()
