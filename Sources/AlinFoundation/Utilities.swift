@@ -418,12 +418,30 @@ public func isSupportedFileType(at path: String) -> Bool {
 // --- Create Application Support folder if it doesn't exist ---
 public func ensureApplicationSupportFolderExists() {
     let fileManager = FileManager.default
-    let supportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!.appendingPathComponent(Bundle.main.name)
+    // Construct the Application Support folder path
+    guard let supportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent(Bundle.main.name) else {
+        printOS("Failed to construct Application Support path.")
+        return
+    }
 
-    // Check to make sure Application Support/App Name folder exists
-    if !fileManager.fileExists(atPath: supportURL.path) {
-        try! fileManager.createDirectory(at: supportURL, withIntermediateDirectories: true)
-        printOS("Created Application Support/\(Bundle.main.name) folder")
+    // Check if the directory exists
+    var isDirectory: ObjCBool = false
+    if fileManager.fileExists(atPath: supportURL.path, isDirectory: &isDirectory) {
+        if isDirectory.boolValue {
+            // Directory exists, nothing to do
+            return
+        } else {
+            // Path exists but is not a directory
+            printOS("A non-directory file exists at the expected Application Support folder path.")
+        }
+    }
+
+    // Create the directory if it doesn't exist
+    do {
+        try fileManager.createDirectory(at: supportURL, withIntermediateDirectories: true)
+        printOS("Created Application Support/\(Bundle.main.name) folder.")
+    } catch {
+        printOS("Failed to create Application Support folder: \(error)")
     }
 }
 
