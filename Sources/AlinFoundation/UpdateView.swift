@@ -104,7 +104,9 @@ struct UpdateView: View {
                     }
                 }
 
-                Button(action: { dismiss() }) {
+                Button(action: {
+                    dismiss()
+                }) {
                     Text("Close")
                         .padding(5)
                 }
@@ -120,6 +122,9 @@ struct UpdateView: View {
                     .foregroundStyle(.secondary)
                     .padding(.bottom)
             }
+        }
+        .onDisappear {
+            updaterService.forceUpdate = false
         }
 
     }
@@ -180,7 +185,9 @@ struct NoUpdateView: View {
             }
 
         }
-
+        .onDisappear {
+            updaterService.forceUpdate = false
+        }
     }
 }
 
