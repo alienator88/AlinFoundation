@@ -14,7 +14,7 @@ struct UpdateContentView: View {
 
     var body: some View {
         Group {
-            if updaterService.updateAvailable || updaterService.forceUpdate {
+            if updaterService.updateAvailable || updaterService.force {
                 UpdateView(updaterService: updaterService)
                     .edgesIgnoringSafeArea(.all)
                     .material(.hudWindow)
@@ -49,7 +49,8 @@ struct UpdateView: View {
 
                 Spacer()
 
-                Text("\(updaterService.updateAvailable ? "Update Available 🥳".localized() : "Completed 🚀".localized())")
+                Text("\(updaterService.force ? "Forced Update 😠".localized() : (updaterService.progressBar.1 != 1.0 ? "Update Available 🥳".localized() : "Completed 🚀".localized()))")
+                //                Text("\(updaterService.updateAvailable ? "Update Available 🥳".localized() : "Completed 🚀".localized())")
                     .font(.title2)
                     .bold()
                     .padding(.vertical, 7)
@@ -124,7 +125,7 @@ struct UpdateView: View {
             }
         }
         .onDisappear {
-            updaterService.forceUpdate = false
+            updaterService.force = false
         }
 
     }
@@ -147,7 +148,7 @@ struct NoUpdateView: View {
 
                 Spacer()
 
-                Text("\(updaterService.progressBar.1 != 1.0 ? "No Update 😌".localized() : "Completed 🚀".localized())")
+                Text("No Update 😌".localized())
                     .font(.title)
                     .bold()
                     .padding(.vertical, 5)
@@ -180,14 +181,16 @@ struct NoUpdateView: View {
             .padding(.vertical)
             .contextMenu {
                 Button("Force Update") {
-                    updaterService.loadGithubReleases(showSheet: true, force: true)
+                    dismiss()
+                    updaterService.loadGithubReleases(sheet: true, force: true)
                 }
             }
 
         }
         .onDisappear {
-            updaterService.forceUpdate = false
+            updaterService.force = false
         }
+
     }
 }
 
@@ -215,14 +218,12 @@ public struct UpdateBadge: View {
                 disabled: updater.updateFrequency == .none
             )
             .onAppear {
-                updater.checkForUpdates(showSheet: false)
+                updater.checkForUpdates()
             }
             .sheet(isPresented: $showUpdateView, content: {
                 updater.getUpdateView()
             })
         }
-
-
     }
 }
 
@@ -260,7 +261,7 @@ public struct FrequencyView: View {
             }
             .onChange(of: updater.updateFrequency) { _ in
                 localNextUpdateDate = updater.nextUpdateDate
-                updater.checkForUpdates(showSheet: false)
+                updater.checkForUpdates()
             }
             .buttonStyle(.borderless)
         }

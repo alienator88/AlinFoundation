@@ -12,8 +12,8 @@ import AppKit
 class UpdaterService: ObservableObject {
     @Published var releases: [Release] = []
     @Published var updateAvailable: Bool = false
-    @Published var forceUpdate: Bool = false
-    @Published var showSheet: Bool = false
+    @Published var sheet: Bool = false
+    @Published var force: Bool = false
     @Published var progressBar: (String, Double) = ("", 0.0)
     weak var updater: Updater?
     
@@ -48,7 +48,7 @@ class UpdaterService: ObservableObject {
         }.resume()
     }
 
-    func loadGithubReleases(showSheet: Bool, force: Bool = false) {
+    func loadGithubReleases(sheet: Bool, force: Bool = false) {
         let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
         var request = URLRequest(url: url)
         if !token.isEmpty {
@@ -60,26 +60,30 @@ class UpdaterService: ObservableObject {
             if let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) {
                 DispatchQueue.main.async {
                     self.releases = Array(decodedResponse.prefix(3))
-                    self.checkForUpdate(showSheet: showSheet, force: force)
+                    self.checkForUpdate(sheet: sheet, force: force)
                 }
             }
         }.resume()
     }
 
-    private func checkForUpdate(showSheet: Bool, force: Bool = false) {
+    private func checkForUpdate(sheet: Bool, force: Bool = false) {
         guard let latestRelease = releases.first else { return }
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
 
-        // If force is true, always show the update sheet
         updateAvailable = latestRelease.tag_name > currentVersion
 
-        if force {
-            forceUpdate = true
+        // Set the sheet behavior
+        DispatchQueue.main.async() {
+            if sheet && self.updateAvailable {
+                self.sheet = true
+            } else if sheet && (!self.updateAvailable && force) {
+                self.sheet = true
+                self.force = true
+            } else {
+                self.sheet = false
+            }
         }
 
-        DispatchQueue.main.async() {
-            self.showSheet = showSheet
-        }
     }
 
     func ensureAppIsInApplicationsFolder() -> Bool {

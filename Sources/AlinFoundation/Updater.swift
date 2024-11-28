@@ -11,7 +11,7 @@ import Combine
 
 public class Updater: ObservableObject {
     @Published public var updateAvailable: Bool = false
-    @Published public var showSheet: Bool = false
+    @Published public var sheet: Bool = false
     @Published public var releases: [Release] = []
     @Published public var announcementAvailable: Bool = false
     @Published public var progressBar: (String, Double) = ("", 0.0)
@@ -114,8 +114,8 @@ public class Updater: ObservableObject {
             .assign(to: \.updateAvailable, on: self)
             .store(in: &cancellables)
 
-        updaterService.$showSheet
-            .assign(to: \.showSheet, on: self)
+        updaterService.$sheet
+            .assign(to: \.sheet, on: self)
             .store(in: &cancellables)
 
         updaterService.$progressBar
@@ -131,16 +131,14 @@ public class Updater: ObservableObject {
         self.checkForAnnouncement()
     }
 
-    public func checkForUpdates(showSheet: Bool = true) {
+    public func checkForUpdates(sheet: Bool = false, force: Bool = false) {
         guard updateFrequency != .none else { // Disable so no badge check happens when set to Never frequency
             printOS("Updater: frequency set to never, skipping badge update check", category: LogCategory.updater)
             return
         }
-        updaterService.loadGithubReleases(showSheet: showSheet)
-    }
 
-    public func checkForUpdatesForce(showSheet: Bool = true) {
-        updaterService.loadGithubReleases(showSheet: showSheet, force: true)
+        updaterService.loadGithubReleases(sheet: sheet, force: force)
+
     }
 
     public func checkReleaseNotes() {
@@ -166,7 +164,7 @@ public class Updater: ObservableObject {
 
         if now >= nextUpdateDate {
             printOS("Updater: performing update check", category: LogCategory.updater)
-            self.checkForUpdates(showSheet: false)
+            self.checkForUpdates()
         } else {
             self.checkReleaseNotes()
             printOS("Updater: next update date is in the future, skipping (\(formattedDate(nextUpdateDate)))", category: LogCategory.updater)
