@@ -92,7 +92,7 @@ struct UpdateView: View {
                     .disabled(updaterService.releases.first?.name.lowercased() == "ignore")
                     .contextMenu {
                         Button("Force Update") {
-                            updaterService.loadGithubReleases(showSheet: true, force: true)
+                            updaterService.downloadUpdate()
                         }
                     }
                 } else if updaterService.progressBar.1 == 1.0 {
@@ -208,7 +208,11 @@ public struct UpdateBadge: View {
                 disabled: updater.updateFrequency == .none
             )
             .onAppear {
-                updater.checkForUpdates(showSheet: false)
+                if updater.forceUpdate {
+                    updater.checkForUpdatesForce(showSheet: false)
+                } else {
+                    updater.checkForUpdates(showSheet: false)
+                }
             }
             .sheet(isPresented: $showUpdateView, content: {
                 updater.getUpdateView()
