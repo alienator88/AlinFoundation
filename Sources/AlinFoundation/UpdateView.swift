@@ -173,6 +173,11 @@ struct NoUpdateView: View {
                     .padding(5)
             }
             .padding(.vertical)
+            .contextMenu {
+                Button("Force Update") {
+                    updaterService.loadGithubReleases(showSheet: true, force: true)
+                }
+            }
 
         }
 
