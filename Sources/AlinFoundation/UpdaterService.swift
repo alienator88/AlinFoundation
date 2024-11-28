@@ -47,7 +47,7 @@ class UpdaterService: ObservableObject {
         }.resume()
     }
 
-    func loadGithubReleases(showSheet: Bool) {
+    func loadGithubReleases(showSheet: Bool, force: Bool = false) {
         let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
         var request = URLRequest(url: url)
         if !token.isEmpty {
@@ -59,16 +59,19 @@ class UpdaterService: ObservableObject {
             if let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) {
                 DispatchQueue.main.async {
                     self.releases = Array(decodedResponse.prefix(3))
-                    self.checkForUpdate(showSheet: showSheet)
+                    self.checkForUpdate(showSheet: showSheet, force: force)
                 }
             }
         }.resume()
     }
 
-    private func checkForUpdate(showSheet: Bool) {
+    private func checkForUpdate(showSheet: Bool, force: Bool = false) {
         guard let latestRelease = releases.first else { return }
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
-        updateAvailable = latestRelease.tag_name > currentVersion
+
+        // If force is true, always show the update sheet
+        updateAvailable = force || latestRelease.tag_name > currentVersion
+
         DispatchQueue.main.async() {
             self.showSheet = showSheet
         }
