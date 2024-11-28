@@ -12,6 +12,7 @@ import AppKit
 class UpdaterService: ObservableObject {
     @Published var releases: [Release] = []
     @Published var updateAvailable: Bool = false
+    @Published var forceUpdate: Bool = false
     @Published var showSheet: Bool = false
     @Published var progressBar: (String, Double) = ("", 0.0)
     weak var updater: Updater?

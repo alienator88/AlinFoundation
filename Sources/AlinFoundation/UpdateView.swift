@@ -14,7 +14,7 @@ struct UpdateContentView: View {
 
     var body: some View {
         Group {
-            if updaterService.updateAvailable {
+            if updaterService.updateAvailable || updaterService.forceUpdate {
                 UpdateView(updaterService: updaterService)
                     .edgesIgnoringSafeArea(.all)
                     .material(.hudWindow)
@@ -208,11 +208,7 @@ public struct UpdateBadge: View {
                 disabled: updater.updateFrequency == .none
             )
             .onAppear {
-                if updater.forceUpdate {
-                    updater.checkForUpdatesForce(showSheet: false)
-                } else {
-                    updater.checkForUpdates(showSheet: false)
-                }
+                updater.checkForUpdates(showSheet: false)
             }
             .sheet(isPresented: $showUpdateView, content: {
                 updater.getUpdateView()

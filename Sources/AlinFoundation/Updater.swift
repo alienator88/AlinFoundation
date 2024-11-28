@@ -115,6 +115,10 @@ public class Updater: ObservableObject {
             .assign(to: \.updateAvailable, on: self)
             .store(in: &cancellables)
 
+        updaterService.$forceUpdate
+            .assign(to: \.forceUpdate, on: self)
+            .store(in: &cancellables)
+
         updaterService.$showSheet
             .assign(to: \.showSheet, on: self)
             .store(in: &cancellables)
