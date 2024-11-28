@@ -12,7 +12,6 @@ import Combine
 public class Updater: ObservableObject {
     @Published public var updateAvailable: Bool = false
     @Published public var showSheet: Bool = false
-    @Published public var forceUpdate: Bool = false
     @Published public var releases: [Release] = []
     @Published public var announcementAvailable: Bool = false
     @Published public var progressBar: (String, Double) = ("", 0.0)
@@ -113,10 +112,6 @@ public class Updater: ObservableObject {
 
         updaterService.$updateAvailable
             .assign(to: \.updateAvailable, on: self)
-            .store(in: &cancellables)
-
-        updaterService.$forceUpdate
-            .assign(to: \.forceUpdate, on: self)
             .store(in: &cancellables)
 
         updaterService.$showSheet

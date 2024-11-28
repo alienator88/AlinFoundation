@@ -71,7 +71,11 @@ class UpdaterService: ObservableObject {
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
 
         // If force is true, always show the update sheet
-        updateAvailable = force || latestRelease.tag_name > currentVersion
+        updateAvailable = latestRelease.tag_name > currentVersion
+
+        if force {
+            forceUpdate = true
+        }
 
         DispatchQueue.main.async() {
             self.showSheet = showSheet
