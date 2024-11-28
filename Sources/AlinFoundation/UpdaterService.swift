@@ -97,7 +97,6 @@ class UpdaterService: ObservableObject {
                 // If the user chooses "Ignore", return true to proceed
                 return response == .alertSecondButtonReturn
 
-            return false
         }
     }
 
@@ -109,7 +108,6 @@ class UpdaterService: ObservableObject {
         self.progressBar.0 = "Update in progress"
         self.progressBar.1 = 0.1
 
-        let fileManager = FileManager.default
         guard let latestRelease = self.releases.first,
               let asset = latestRelease.assets.first,
               let url = URL(string: asset.url) else { return }
@@ -119,7 +117,12 @@ class UpdaterService: ObservableObject {
             request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
         }
 
+        let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let destinationURL = appSupportDirectory
+            .appendingPathComponent(Bundle.main.name)
+            .appendingPathComponent(asset.name)
 
+        let fileExists = FileManager.default.fileExists(atPath: destinationURL.path)
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data, error == nil else {
@@ -131,13 +134,9 @@ class UpdaterService: ObservableObject {
                 self.progressBar.1 = 0.2
             }
 
-            let destinationURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-                .appendingPathComponent(Bundle.main.name)
-                .appendingPathComponent(asset.name)
-
             do {
-                if fileManager.fileExists(atPath: destinationURL.path) {
-                    try fileManager.removeItem(at: destinationURL)
+                if fileExists {
+                    try FileManager.default.removeItem(at: destinationURL)
                 }
 
                 try data.write(to: destinationURL)

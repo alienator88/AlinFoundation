@@ -176,7 +176,7 @@ public class Updater: ObservableObject {
     public func setNextUpdateDate() {
         let calendar = Calendar.current
         let now = Date()
-        let startOfToday = calendar.startOfDay(for: now)
+//        let startOfToday = calendar.startOfDay(for: now)
 
         switch updateFrequency {
         case .daily:

@@ -110,6 +110,7 @@ public class PermissionManager: ObservableObject {
                 }
             } catch let error {
                 DispatchQueue.main.async {
+                    printOS(error)
                     completion(false)  // Full Disk Access is denied
                 }
             }

@@ -277,26 +277,18 @@ public struct ReleasesView: View {
                                 LabeledDivider(label: "\(release.tag_name)")
 
                                 if let attributedString = release.modifiedBody(owner: updater.owner, repo: updater.repo) {
-                                    if let swiftAttributedString = try? AttributedString(attributedString) {
-                                        Text(swiftAttributedString)
-                                            .font(.body)
-                                            .multilineTextAlignment(.leading)
-                                            .padding(10)
-                                            .textSelection(.disabled)
-
-                                    } else {
-                                        Text("Failed to display release notes")
-                                            .font(.body)
-                                            .foregroundColor(.red)
-                                            .padding(10)
-                                    }
+                                    let swiftAttributedString = AttributedString(attributedString)
+                                    Text(swiftAttributedString)
+                                        .font(.body)
+                                        .multilineTextAlignment(.leading)
+                                        .padding(10)
+                                        .textSelection(.disabled)
                                 } else {
                                     Text("Failed to display release notes")
                                         .font(.body)
                                         .foregroundColor(.red)
                                         .padding(10)
                                 }
-
                             }
 
 

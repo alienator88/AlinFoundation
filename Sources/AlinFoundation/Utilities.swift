@@ -119,9 +119,16 @@ public func updateOnMain(after delay: Double? = nil, _ updates: @escaping () -> 
 
 
 // Execute functions on background thread
-public func updateOnBackground(_ updates: @escaping () -> Void) {
-    DispatchQueue.global(qos: .userInitiated).async {
-        updates()
+public func updateOnBackground(after delay: Double? = nil, qos: DispatchQoS.QoSClass = .userInitiated, _ updates: @escaping () -> Void) {
+    let queue = DispatchQueue.global(qos: qos)
+    if let delay = delay {
+        queue.asyncAfter(deadline: .now() + delay) {
+            updates()
+        }
+    } else {
+        queue.async {
+            updates()
+        }
     }
 }
 
@@ -502,7 +509,7 @@ public func copyToClipboard(_ text: String) {
 // Localize Text strings
 public extension String {
     /// Returns a localized version of the string using NSLocalizedString.
-    public func localized(comment: String = "") -> String {
+    func localized(comment: String = "") -> String {
         return NSLocalizedString(self, comment: comment)
     }
 }
