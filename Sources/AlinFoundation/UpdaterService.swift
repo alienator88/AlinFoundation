@@ -74,12 +74,14 @@ class UpdaterService: ObservableObject {
 
         // Set the sheet behavior
         DispatchQueue.main.async() {
-            if sheet && self.updateAvailable {
+            if sheet && self.updateAvailable { // Update available and show sheet is ON
                 self.sheet = true
-            } else if sheet && (!self.updateAvailable && force) {
+            } else if sheet && !self.updateAvailable { // No update and show sheet is ON
+                self.sheet = true
+            } else if sheet && (!self.updateAvailable && force) { // No update + force and show sheet is ON
                 self.sheet = true
                 self.force = true
-            } else {
+            } else { // Show sheet is OFF
                 self.sheet = false
             }
         }

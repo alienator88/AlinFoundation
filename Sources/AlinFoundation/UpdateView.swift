@@ -50,7 +50,6 @@ struct UpdateView: View {
                 Spacer()
 
                 Text("\(updaterService.force ? "Forced Update 😠".localized() : (updaterService.progressBar.1 != 1.0 ? "Update Available 🥳".localized() : "Completed 🚀".localized()))")
-                //                Text("\(updaterService.updateAvailable ? "Update Available 🥳".localized() : "Completed 🚀".localized())")
                     .font(.title2)
                     .bold()
                     .padding(.vertical, 7)
