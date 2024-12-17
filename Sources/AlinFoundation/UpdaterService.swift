@@ -119,7 +119,7 @@ class UpdaterService: ObservableObject {
             return
         }
 
-        self.progressBar.0 = "Update in progress"
+        self.progressBar.0 = "Update in progress".localized()
         self.progressBar.1 = 0.1
 
         guard let latestRelease = self.releases.first,
@@ -212,7 +212,7 @@ class UpdaterService: ObservableObject {
             try fileManager.removeItem(atPath: fileURL)
 
             DispatchQueue.main.async {
-                self.progressBar.0 = "Update completed"
+                self.progressBar.0 = "Update completed".localized()
                 self.progressBar.1 = 1.0
                 self.updater?.setNextUpdateDate()
             }
