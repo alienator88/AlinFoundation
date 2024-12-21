@@ -18,7 +18,7 @@ public class PermissionManager: ObservableObject {
     @Published public var results: PermissionsCheckResults?
 
     private init() {
-        checkAllPermissions()
+//        checkAllPermissions()
     }
 
     public var allPermissionsGranted: Bool {
