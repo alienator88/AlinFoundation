@@ -125,7 +125,7 @@ class UpdaterService: ObservableObject {
         guard let latestRelease = self.releases.first,
               let asset = latestRelease.assets.first(where: { $0.name.hasSuffix(".zip") }),
               let url = URL(string: asset.url) else { return }
-        print(asset)
+
         var request = URLRequest(url: url)
         request.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
         if !token.isEmpty {
