@@ -126,16 +126,18 @@ public class TokenManager: ObservableObject {
 
 public struct TokenBadge: View {
     var buttonAction: () -> Void
+    var hideLabel: Bool
 
-    public init(buttonAction: @escaping () -> Void) {
+    public init(buttonAction: @escaping () -> Void, hideLabel: Bool = false) {
         self.buttonAction = buttonAction
+        self.hideLabel = hideLabel
     }
 
     public var body: some View {
 
         AlertNotification(label: "Invalid Token".localized(), icon: "key", buttonAction: {
             buttonAction()
-        }, btnColor: Color.purple)
+        }, btnColor: Color.purple, hideLabel: hideLabel)
     }
 }
 

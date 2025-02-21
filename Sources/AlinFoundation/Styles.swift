@@ -306,41 +306,43 @@ public struct AlertNotification: View {
     var buttonAction: () -> Void
     var btnColor: Color
     var disabled: Bool = false
+    var hideLabel: Bool = false
 
 //    @ObservedObject var themeManager: ThemeManager
     @State private var hovered = false
     @Environment(\.colorScheme) var colorScheme // Access the current color scheme
 
-    public init(label: String, icon: String, buttonAction: @escaping () -> Void, btnColor: Color, disabled: Bool = false) {
+    public init(label: String, icon: String, buttonAction: @escaping () -> Void, btnColor: Color, disabled: Bool = false, hideLabel: Bool = false) {
         self.label = label
         self.icon = icon
         self.buttonAction = buttonAction
         self.btnColor = btnColor
         self.disabled = disabled
+        self.hideLabel = hideLabel
     }
 
     public var body: some View {
         HStack {
-            Text(label)
-                .font(.title3)
-                .foregroundStyle(colorScheme == .dark ? .white : .black)
-                .opacity(0.5)
-                .padding(.leading, 7)
+            if !hideLabel {
+                Text(label)
+                    .font(.title3)
+                    .foregroundStyle(colorScheme == .dark ? .white : .black)
+                    .opacity(0.5)
+                    .padding(.leading, 7)
 
-            Spacer()
-
-            Button(action: buttonAction) {
-                HStack(alignment: .center, spacing: 5) {
-                    Image(systemName: !hovered ? "\(icon)" : "\(icon).fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 14, height: 14)
-                        .foregroundStyle(.white)
-                    Text("View")
-                        .foregroundStyle(.white)
-                }
-                .padding(3)
+                Spacer()
             }
+
+            HStack(alignment: .center, spacing: 5) {
+                Image(systemName: !hovered ? "\(icon)" : "\(icon).fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
+                    .foregroundStyle(.white)
+                Text(hideLabel ? label : "View")
+                    .foregroundStyle(.white)
+            }
+            .padding(3)
             .buttonStyle(PlainButtonStyle())
             .padding(4)
             .background(btnColor)
@@ -355,6 +357,10 @@ public struct AlertNotification: View {
             }
         }
         .frame(height: 30)
+        .clipShape(Rectangle())
+        .onTapGesture {
+            buttonAction()
+        }
     }
 }
 

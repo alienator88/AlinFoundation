@@ -198,10 +198,11 @@ public struct UpdateBadge: View {
     @ObservedObject var updater: Updater
     @State private var showUpdateView = false
     @State private var hovered = false
+    var hideLabel: Bool
 
-
-    public init(updater: Updater) {
+    public init(updater: Updater, hideLabel: Bool = false) {
         self.updater = updater
+        self.hideLabel = hideLabel
     }
 
     public var body: some View {
@@ -214,7 +215,8 @@ public struct UpdateBadge: View {
                     showUpdateView = true
                 },
                 btnColor: Color.green,
-                disabled: updater.updateFrequency == .none
+                disabled: updater.updateFrequency == .none,
+                hideLabel: hideLabel
             )
             .onAppear {
                 updater.checkForUpdates()
@@ -339,15 +341,17 @@ public struct ReleasesView: View {
 public struct FeatureBadge: View {
     @ObservedObject var updater: Updater
     @State private var showFeatureView = false
+    var hideLabel: Bool
 
-    public init(updater: Updater) {
+    public init(updater: Updater, hideLabel: Bool = false) {
         self.updater = updater
+        self.hideLabel = hideLabel
     }
 
     public var body: some View {
         AlertNotification(label: updater.announcementAvailable ? "New Announcement".localized() : "No New Announcement".localized(), icon: "star", buttonAction: {
             showFeatureView = true
-        }, btnColor: Color.blue)
+        }, btnColor: Color.blue, hideLabel: hideLabel)
         .sheet(isPresented: $showFeatureView, content: {
             updater.getAnnouncementView()
         })

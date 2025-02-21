@@ -172,8 +172,11 @@ public struct PermissionsBadge: View {
     @State private var hovered: Bool = false
     @State private var showPermissionList = false
     @Environment(\.dismiss) var dismiss
+    var hideLabel: Bool
 
-    public init() {}
+    public init(hideLabel: Bool = false) {
+        self.hideLabel = hideLabel
+    }
 
     public var body: some View {
         Group {
@@ -181,7 +184,7 @@ public struct PermissionsBadge: View {
 
                 AlertNotification(label: "Missing Permissions".localized(), icon: "lock", buttonAction: {
                     showPermissionList = true
-                }, btnColor: Color.red)
+                }, btnColor: Color.red, hideLabel: hideLabel)
                 .sheet(isPresented: $showPermissionList) {
                     PermissionsListView()
                 }
