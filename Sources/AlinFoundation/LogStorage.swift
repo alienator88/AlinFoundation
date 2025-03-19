@@ -120,7 +120,7 @@ public struct ConsoleView: View {
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 } else {
-                    List(logStorage.logs.indices, id: \.self) { index in
+                    List(logStorage.logs.indices.reversed(), id: \.self) { index in
                         HStack {
                             Text(logStorage.logs[index])
                                 .font(.system(size: 12, weight: .regular, design: .monospaced))
@@ -130,9 +130,9 @@ public struct ConsoleView: View {
                                     NSPasteboard.general.clearContents()
                                     NSPasteboard.general.setString(logStorage.logs[index], forType: .string)
                                     showCopy = true
-                                    updateOnMain(after: 2, {
+                                    updateOnMain(after: 2) {
                                         showCopy = false
-                                    })
+                                    }
                                 }
                         }
 
