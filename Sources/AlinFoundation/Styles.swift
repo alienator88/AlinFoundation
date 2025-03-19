@@ -104,13 +104,15 @@ public struct InfoButton: View {
     let label: String
     let warning: Bool
     let edge: Edge
+    let extraView: AnyView?
 
-    public init(text: String, color: Color = .primary, label: String = "", warning: Bool = false, edge: Edge = .bottom) {
+    public init(text: String, color: Color = .primary, label: String = "", warning: Bool = false, edge: Edge = .bottom, extraView: AnyView? = nil) {
         self.text = text
         self.color = color
         self.label = label
         self.warning = warning
         self.edge = edge
+        self.extraView = extraView
 
     }
 
@@ -142,17 +144,30 @@ public struct InfoButton: View {
             }
         }
         .popover(isPresented: $isPopoverPresented, arrowEdge: edge) {
-            VStack {
+            VStack(spacing: 10) {
                 Spacer()
+
                 Text(text)
                     .font(.callout)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                if let extraView = extraView {
+                    extraView
+                }
+                
                 Spacer()
             }
+            .padding()
             .frame(width: 300)
         }
         .padding(.horizontal, 5)
+    }
+}
+
+// Convenience initializer allowing trailing closure without wrapping in AnyView
+extension InfoButton {
+    public init<V: View>(text: String, color: Color = .primary, label: String = "", warning: Bool = false, edge: Edge = .bottom, @ViewBuilder extraView: () -> V) {
+        self.init(text: text, color: color, label: label, warning: warning, edge: edge, extraView: AnyView(extraView()))
     }
 }
 
