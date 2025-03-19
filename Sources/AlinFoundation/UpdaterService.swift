@@ -173,53 +173,58 @@ class UpdaterService: ObservableObject {
     private func unzipAndReplace(downloadedFileURL fileURL: String) {
         let appDirectory = Bundle.main.bundleURL.deletingLastPathComponent().path
         let appBundle = Bundle.main.bundleURL.path
-        let fileManager = FileManager.default
+
+        // Helper to run a shell command
+        func runShellCommand(_ command: String) throws {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/bash")
+            process.arguments = ["-c", command]
+            try process.run()
+            process.waitUntilExit()
+            if process.terminationStatus != 0 {
+                throw NSError(domain: "ShellCommandError", code: Int(process.terminationStatus), userInfo: nil)
+            }
+        }
 
         do {
             DispatchQueue.main.async {
-//                self.progressBar.0 = "UPDATER: Removing currently installed application bundle"
                 self.progressBar.1 = 0.5
             }
-
-            try fileManager.removeItem(atPath: appBundle)
+            // Remove the current app bundle
+            try runShellCommand("rm -rf \"\(appBundle)\"")
 
             DispatchQueue.main.async {
-//                self.progressBar.0 = "UPDATER: Unzipping file to original install location"
                 self.progressBar.1 = 0.6
             }
-
-            let process = Process()
-//            let outputPipe = Pipe()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
-            process.arguments = ["-xk", fileURL, appDirectory]
-            process.standardOutput = FileHandle.nullDevice
-            process.standardError = FileHandle.nullDevice
-//            let outputHandle = outputPipe.fileHandleForReading
-
-            try process.run()
-            process.waitUntilExit()
-
-
-//            let outputData = outputHandle.readDataToEndOfFile()
-//            if let outputString = String(data: outputData, encoding: .utf8) {
-//                print(outputString)
-//            }
+            // Unzip the update to the app directory
+            try runShellCommand("ditto -xk \"\(fileURL)\" \"\(appDirectory)\"")
 
             DispatchQueue.main.async {
-//                self.progressBar.0 = "UPDATER: Removing file from temp directory"
                 self.progressBar.1 = 0.8
             }
-
-            try fileManager.removeItem(atPath: fileURL)
+            // Remove the downloaded file
+            try runShellCommand("rm -f \"\(fileURL)\"")
 
             DispatchQueue.main.async {
                 self.progressBar.0 = "Update completed".localized()
                 self.progressBar.1 = 1.0
                 self.updater?.setNextUpdateDate()
             }
-
         } catch {
             printOS("Error replacing the app: \(error)", category: LogCategory.updater)
+
+            // If an error occurs, run all commands with elevated privileges
+            let commands = "rm -rf \"\(appBundle)\" && ditto -xk \"\(fileURL)\" \"\(appDirectory)\" && rm -f \"\(fileURL)\""
+            if performPrivilegedCommands(commands: commands) {
+                DispatchQueue.main.async {
+                    self.progressBar.0 = "Update completed".localized()
+                    self.progressBar.1 = 1.0
+                    self.updater?.setNextUpdateDate()
+                }
+            } else {
+                printOS("Privileged commands failed", category: LogCategory.updater)
+                self.progressBar.0 = "Failed to update, check debug logs".localized()
+            }
         }
     }
 }
