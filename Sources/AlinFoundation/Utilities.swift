@@ -215,6 +215,15 @@ public func relaunchApp(afterDelay seconds: TimeInterval = 0.5) -> Never {
     exit(0)
 }
 
+// Check if OS is arm
+public func isOSArm() -> Bool {
+#if arch(arm64)
+    return true
+#else
+    return false
+#endif
+}
+
 // Check if macOS is specified version or higher
 public func isVersionOrHigher(version: Int) -> Bool {
     let systemVersion = ProcessInfo.processInfo.operatingSystemVersion
