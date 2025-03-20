@@ -10,8 +10,8 @@ import AlinFoundation
 
 // Helper structs for Mach-O parsing
 public struct FatHeader {
-    let magic: UInt32
-    let numArchitectures: UInt32
+    public let magic: UInt32
+    public let numArchitectures: UInt32
 
     public init(magic: UInt32, numArchitectures: UInt32) {
         self.magic = magic
@@ -20,11 +20,11 @@ public struct FatHeader {
 }
 
 public struct FatArch {
-    let cpuType: UInt32
-    let cpuSubtype: UInt32
-    let offset: UInt32
-    let size: UInt32
-    let align: UInt32
+    public let cpuType: UInt32
+    public let cpuSubtype: UInt32
+    public let offset: UInt32
+    public let size: UInt32
+    public let align: UInt32
 
     public init(cpuType: UInt32, cpuSubtype: UInt32, offset: UInt32, size: UInt32, align: UInt32) {
         self.cpuType = cpuType
