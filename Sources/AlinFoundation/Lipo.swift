@@ -9,12 +9,12 @@ import Foundation
 import AlinFoundation
 
 // Helper structs for Mach-O parsing
-struct FatHeader {
+public struct FatHeader {
     let magic: UInt32
     let numArchitectures: UInt32
 }
 
-struct FatArch {
+public struct FatArch {
     let cpuType: UInt32
     let cpuSubtype: UInt32
     let offset: UInt32
