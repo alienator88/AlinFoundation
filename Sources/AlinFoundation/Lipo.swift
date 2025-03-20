@@ -12,6 +12,11 @@ import AlinFoundation
 public struct FatHeader {
     let magic: UInt32
     let numArchitectures: UInt32
+
+    public init(magic: UInt32, numArchitectures: UInt32) {
+        self.magic = magic
+        self.numArchitectures = numArchitectures
+    }
 }
 
 public struct FatArch {
@@ -20,6 +25,14 @@ public struct FatArch {
     let offset: UInt32
     let size: UInt32
     let align: UInt32
+
+    public init(cpuType: UInt32, cpuSubtype: UInt32, offset: UInt32, size: UInt32, align: UInt32) {
+        self.cpuType = cpuType
+        self.cpuSubtype = cpuSubtype
+        self.offset = offset
+        self.size = size
+        self.align = align
+    }
 }
 
 // Helper function to thin a binary using Mach-O APIs
@@ -88,5 +101,3 @@ public func thinBinaryUsingMachO(executablePath: String) -> Bool {
         return false
     }
 }
-
-
