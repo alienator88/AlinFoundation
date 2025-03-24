@@ -215,7 +215,8 @@ class UpdaterService: ObservableObject {
 
             // If an error occurs, run all commands with elevated privileges
             let commands = "rm -rf \"\(appBundle)\" && ditto -xk \"\(fileURL)\" \"\(appDirectory)\" && rm -f \"\(fileURL)\""
-            if performPrivilegedCommands(commands: commands) {
+            let result = performPrivilegedCommands(commands: commands)
+            if result.0 {
                 DispatchQueue.main.async {
                     self.progressBar.0 = "Update completed".localized()
                     self.progressBar.1 = 1.0
