@@ -1,6 +1,6 @@
 //
 //  Updater.swift
-//  
+//
 //
 //  Created by Alin Lupascu on 7/8/24.
 //
@@ -8,6 +8,12 @@
 
 import SwiftUI
 import Combine
+
+public enum DefaultsKeys {
+    static let nextUpdateDate = "alinfoundation.updater.nextUpdateDate"
+    static let lastViewedVersion = "alinfoundation.updater.lastViewedVersion"
+    static let updateFrequency = "alinfoundation.updater.updateFrequency"
+}
 
 public class Updater: ObservableObject {
     @Published public var updateAvailable: Bool = false
@@ -17,19 +23,19 @@ public class Updater: ObservableObject {
     @Published public var progressBar: (String, Double) = ("", 0.0)
     @Published public var nextUpdateDate: Date {
         didSet {
-            UserDefaults.standard.set(nextUpdateDate.timeIntervalSinceReferenceDate, forKey: "alinfoundation.updater.nextUpdateDate")
+            UserDefaults.standard.set(nextUpdateDate.timeIntervalSinceReferenceDate, forKey: DefaultsKeys.nextUpdateDate)
         }
     }
 
     private var lastViewedVersion: String {
         get {
-            defaults.string(forKey: "alinfoundation.updater.lastViewedVersion") ?? ""
+            defaults.string(forKey: DefaultsKeys.lastViewedVersion) ?? ""
         }
         set {
-            defaults.set(newValue, forKey: "alinfoundation.updater.lastViewedVersion")
+            defaults.set(newValue, forKey: DefaultsKeys.lastViewedVersion)
         }
     }
-    
+
     private var announcement: String = ""
     private var announcementChecked = false
     @Published var owner: String
@@ -45,7 +51,7 @@ public class Updater: ObservableObject {
 
     @Published public var updateFrequency: UpdateFrequency {
         didSet {
-            defaults.set(updateFrequency.rawValue, forKey: "alinfoundation.updater.updateFrequency")
+            defaults.set(updateFrequency.rawValue, forKey: DefaultsKeys.updateFrequency)
             setNextUpdateDate()
         }
     }
@@ -54,14 +60,14 @@ public class Updater: ObservableObject {
         self.owner = owner
         self.repo = repo
 
-        let storedInterval = defaults.double(forKey: "alinfoundation.updater.nextUpdateDate")
+        let storedInterval = defaults.double(forKey: DefaultsKeys.nextUpdateDate)
         if storedInterval != 0.0 {
             self.nextUpdateDate = Date(timeIntervalSinceReferenceDate: storedInterval)
         } else {
             self.nextUpdateDate = Date()
         }
 
-        if let rawValue = defaults.string(forKey: "alinfoundation.updater.updateFrequency"),
+        if let rawValue = defaults.string(forKey: DefaultsKeys.updateFrequency),
            let frequency = UpdateFrequency(rawValue: rawValue) {
             self.updateFrequency = frequency
         } else {
@@ -77,10 +83,10 @@ public class Updater: ObservableObject {
     }
 
     private func loadToken() {
-        _ = tokenManager?.loadToken { [weak self] success in
+        tokenManager?.loadToken { [weak self] success, token in
             guard let self = self else { return }
             if success {
-                self.token = self.tokenManager?.loadToken { _ in } ?? ""
+                self.token = token
                 self.validateToken()
             } else {
                 DispatchQueue.main.async {
@@ -174,12 +180,12 @@ public class Updater: ObservableObject {
     public func setNextUpdateDate() {
         let calendar = Calendar.current
         let now = Date()
-//        let startOfToday = calendar.startOfDay(for: now)
+        //        let startOfToday = calendar.startOfDay(for: now)
 
         switch updateFrequency {
         case .daily:
             self.nextUpdateDate = calendar.date(byAdding: .second, value: 1, to: now)! /// Check on every launch
-//            self.nextUpdateDate = calendar.date(byAdding: .day, value: 1, to: startOfToday)! /// Check only once per day
+                                                                                       //            self.nextUpdateDate = calendar.date(byAdding: .day, value: 1, to: startOfToday)! /// Check only once per day
         case .weekly:
             self.nextUpdateDate = calendar.date(byAdding: .day, value: 7, to: now)!
         case .monthly:
@@ -207,60 +213,33 @@ public class Updater: ObservableObject {
         }
 
         let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/contents/announcements.json")!
-        var request = URLRequest(url: url)
+        var request = makeRequest(url: url, token: token)
         request.setValue("application/vnd.github.VERSION.raw", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
-        if !token.isEmpty {
-            request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
-        }
 
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             guard let self = self else { return }
 
-            // Common logic to get the bundle version
+            if let error = error {
+                printOS("Updater Network error: \(error.localizedDescription)", category: LogCategory.updater)
+                return
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                printOS("Updater HTTP error: \(response.debugDescription)", category: LogCategory.updater)
+                return
+            }
+
             let bundleVersion = Bundle.main.version
 
             if let data = data {
-                do {
-                    let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-                    if let jsonDict = jsonObject as? [String: String] {
-                        if force {
-                            printOS("Updater: forced announcement check", category: LogCategory.updater)
-                            let sortedKeys = jsonDict.keys.sorted { $0 > $1 }
-                            let allAnnouncement = sortedKeys.compactMap { key -> String? in
-                                if let announcementText = jsonDict[key] {
-                                    return "\(key)\n\n\(announcementText)"
-                                }
-                                return nil
-                            }.joined(separator: "\n\n\n")
-
-                            DispatchQueue.main.async {
-                                self.announcement = allAnnouncement.announcementFormat()
-                                self.announcementAvailable = true
-                            }
-                        } else if let announcementText = jsonDict[bundleVersion] {
-                            printOS("Updater: announcement check for version \(bundleVersion)", category: LogCategory.updater)
-                            DispatchQueue.main.async {
-                                self.announcement = "v\(bundleVersion)\n\n\(announcementText)".announcementFormat()
-                                self.announcementAvailable = force || (self.lastViewedVersion != bundleVersion)
-                            }
-                        } else {
-                            printOS("Updater: no announcement for this version", category: LogCategory.updater)
-                            DispatchQueue.main.async {
-                                self.announcement = "No announcement available for this version.".announcementFormat()
-                                self.announcementAvailable = false
-                            }
-                        }
-                        self.announcementChecked = true
-                    } else {
-                        printOS("Updater: json is not a dictionary of strings", category: LogCategory.updater)
-                        DispatchQueue.main.async {
-                            self.announcement = "No announcement available for this version.".announcementFormat()
-                            self.announcementAvailable = false
-                        }
+                if let result = self.parseAnnouncement(from: data, for: bundleVersion, force: force) {
+                    DispatchQueue.main.async {
+                        self.announcement = result.announcement
+                        self.announcementAvailable = force || (self.lastViewedVersion != bundleVersion) && result.available
                     }
-                } catch {
-                    printOS("Updater: error parsing announcement JSON from GitHub: \(error.localizedDescription)", category: LogCategory.updater)
+                } else {
+                    printOS("Updater: no announcement found or JSON in unexpected format", category: LogCategory.updater)
                     DispatchQueue.main.async {
                         self.announcement = "No announcement available for this version.".announcementFormat()
                         self.announcementAvailable = false
@@ -273,7 +252,31 @@ public class Updater: ObservableObject {
     }
 
 
-
+    private func parseAnnouncement(from data: Data, for bundleVersion: String, force: Bool) -> (announcement: String, available: Bool)? {
+        do {
+            let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+            if let jsonDict = jsonObject as? [String: String] {
+                if force {
+                    let sortedKeys = jsonDict.keys.sorted { $0 > $1 }
+                    let allAnnouncement = sortedKeys.compactMap { key -> String? in
+                        if let announcementText = jsonDict[key] {
+                            return "\(key)\n\n\(announcementText)"
+                        }
+                        return nil
+                    }.joined(separator: "\n\n\n")
+                    return (allAnnouncement.announcementFormat(), true)
+                } else if let announcementText = jsonDict[bundleVersion] {
+                    return ("v\(bundleVersion)\n\n\(announcementText)".announcementFormat(), true)
+                } else {
+                    return ("No announcement available for this version.".announcementFormat(), false)
+                }
+            } else {
+                return ("No announcement available for this version.".announcementFormat(), false)
+            }
+        } catch {
+            return nil
+        }
+    }
 
     public func getAnnouncementView() -> some View {
         FeatureView(updater: self)
@@ -294,5 +297,5 @@ public class Updater: ObservableObject {
         return announcement
     }
 
-    
+
 }

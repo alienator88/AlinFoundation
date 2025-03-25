@@ -61,7 +61,7 @@ public class TokenManager: ObservableObject {
         }
     }
 
-    public func loadToken(completion: @escaping (Bool) -> Void) -> String {
+    public func loadToken(completion: @escaping (Bool, String) -> Void) {
         let query = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -73,12 +73,10 @@ public class TokenManager: ObservableObject {
         var result: AnyObject?
         let status = SecItemCopyMatching(query, &result)
         if status == noErr, let data = result as? Data, let token = String(data: data, encoding: .utf8) {
-            completion(true)
-            return token
+            completion(true, token)
         } else {
             printOS("Error retrieving token from Keychain: \(status)")
-            completion(false)
-            return ""
+            completion(false, "")
         }
     }
 

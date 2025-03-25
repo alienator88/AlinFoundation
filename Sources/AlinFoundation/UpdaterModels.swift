@@ -10,10 +10,20 @@ import SwiftUI
 
 public struct Release: Codable, Identifiable {
     public let id: Int
-    public let tag_name: String
+    public let tagName: String
     public let name: String
     public let body: String
     public let assets: [Asset]
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case tagName = "tag_name"
+        case name
+        case body
+        case assets
+    }
+
+    public static let issueRegex: NSRegularExpression? = try? NSRegularExpression(pattern: "#(\\d+)")
 
     public func modifiedBody(owner: String, repo: String) -> NSAttributedString? {
         let result = NSMutableAttributedString()
@@ -53,8 +63,26 @@ public struct Release: Codable, Identifiable {
             attributedLine.mutableString.setString(replaced)
         }
 
+        // Check if the line is a markdown image syntax
+        if line.hasPrefix("![") && line.contains("](") && line.hasSuffix(")") {
+            // Parse the alt text and URL from the markdown
+            guard let altTextStart = line.firstIndex(of: "["),
+                    let altTextEnd = line.firstIndex(of: "]"),
+                  let urlStart = line.firstIndex(of: "("),
+                    let urlEnd = line.lastIndex(of: ")") else {
+                return NSMutableAttributedString(string: line)
+            }
+            let urlString = String(line[line.index(after: urlStart)..<urlEnd])
+            let replacedText = "\n🏞️ View Screenshot\n"
+            let newAttributedLine = NSMutableAttributedString(string: replacedText)
+            newAttributedLine.addAttribute(.link, value: urlString, range: NSRange(location: 0, length: newAttributedLine.length))
+            return newAttributedLine
+        }
+
         // Handle issue numbers and make them clickable
-        let regex = try! NSRegularExpression(pattern: "#(\\d+)")
+        guard let regex = Release.issueRegex else {
+            return attributedLine
+        }
         let range = NSRange(line.startIndex..., in: line)
 
         // Find and replace issue numbers with clickable links
@@ -93,12 +121,13 @@ public struct Release: Codable, Identifiable {
 }
 
 extension NSMutableAttributedString {
-
-    public func setAsLink(textToFind:String, linkURL:String) {
-
-        let foundRange = self.mutableString.range(of: textToFind)
-        if foundRange.location != NSNotFound {
-            self.addAttribute(.link, value: linkURL, range: foundRange)
+    public func setAsLink(textToFind: String, linkURL: String) {
+        let fullText = self.string
+        var searchRange = fullText.startIndex..<fullText.endIndex
+        while let foundRange = fullText.range(of: textToFind, options: .caseInsensitive, range: searchRange) {
+            let nsRange = NSRange(foundRange, in: fullText)
+            self.addAttribute(.link, value: linkURL, range: nsRange)
+            searchRange = foundRange.upperBound..<fullText.endIndex
         }
     }
 }
@@ -130,7 +159,13 @@ struct ReleaseNotesView: View {
 public struct Asset: Codable {
     public let name: String
     public let url: String
-    public let browser_download_url: String
+    public let browserDownloadURL: String
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case url
+        case browserDownloadURL = "browser_download_url"
+    }
 }
 
 public enum UpdateFrequency: String, CaseIterable, Identifiable {
@@ -157,6 +192,6 @@ public enum UpdateFrequency: String, CaseIterable, Identifiable {
     public func updateNextUpdateDate() {
         guard let updateInterval = self.interval else { return }
         let newUpdateDate = Calendar.current.startOfDay(for: Date().addingTimeInterval(updateInterval))
-        UserDefaults.standard.set(newUpdateDate.timeIntervalSinceReferenceDate, forKey: "alinfoundation.updater.nextUpdateDate")
+        UserDefaults.standard.set(newUpdateDate.timeIntervalSinceReferenceDate, forKey: DefaultsKeys.nextUpdateDate)
     }
 }

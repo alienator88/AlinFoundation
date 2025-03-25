@@ -56,7 +56,7 @@ struct UpdateView: View {
 
                 Spacer()
 
-                Text("GitHub: v\(updaterService.releases.first?.tag_name ?? "")")
+                Text("GitHub: v\(updaterService.releases.first?.tagName ?? "")")
                     .font(.title3)
                     .fontWeight(.semibold)
                     .opacity(0.5)
@@ -154,7 +154,7 @@ struct NoUpdateView: View {
 
                 Spacer()
 
-                Text("GitHub: v\(updaterService.releases.first?.tag_name ?? "")")
+                Text("GitHub: v\(updaterService.releases.first?.tagName ?? "")")
                     .font(.title3)
                     .fontWeight(.semibold)
                     .opacity(0.5)
@@ -288,7 +288,7 @@ public struct ReleasesView: View {
                     VStack() {
                         ForEach(updater.releases, id: \.id) { release in
                             VStack(alignment: .leading) {
-                                LabeledDivider(label: "\(release.tag_name)")
+                                LabeledDivider(label: "\(release.tagName)")
 
                                 if let attributedString = release.modifiedBody(owner: updater.owner, repo: updater.repo) {
                                     let swiftAttributedString = AttributedString(attributedString)
