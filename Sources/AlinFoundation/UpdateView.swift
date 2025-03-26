@@ -272,7 +272,7 @@ public struct FrequencyView: View {
     }
 }
 
-
+// Release notes view for all release notes
 public struct ReleasesView: View {
     @ObservedObject var updater: Updater
 
@@ -287,16 +287,18 @@ public struct ReleasesView: View {
                 ScrollView {
                     VStack() {
                         ForEach(updater.releases, id: \.id) { release in
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 0) {
                                 LabeledDivider(label: "\(release.tagName)")
 
                                 if let attributedString = release.modifiedBody(owner: updater.owner, repo: updater.repo) {
                                     let swiftAttributedString = AttributedString(attributedString)
                                     Text(swiftAttributedString)
                                         .font(.body)
+                                        .padding()
                                         .multilineTextAlignment(.leading)
-                                        .padding(10)
                                         .textSelection(.disabled)
+
+                                    ReleaseImagesView(markdown: release.body)
                                 } else {
                                     Text("Failed to display release notes")
                                         .font(.body)
@@ -304,8 +306,6 @@ public struct ReleasesView: View {
                                         .padding(10)
                                 }
                             }
-
-
                         }
                     }
                     .padding()
@@ -335,7 +335,28 @@ public struct ReleasesView: View {
     }
 }
 
+struct ReleaseImagesView: View {
+    @StateObject private var collector = ImageURLCollector()
+    let markdown: String
 
+    var body: some View {
+        VStack {
+            ForEach(collector.urls, id: \.self) { resolvedURL in
+                AsyncImage(url: resolvedURL) { image in
+                    image.resizable()
+                        .scaledToFit()
+                        .cornerRadius(8)
+                } placeholder: {
+                    ProgressView()
+                }
+            }
+        }
+        .onAppear {
+            collector.reset()
+            collector.collect(from: markdown)
+        }
+    }
+}
 
 //MARK: Features
 public struct FeatureBadge: View {

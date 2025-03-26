@@ -1,12 +1,16 @@
 //
 //  UpdaterModels.swift
-//  
+//
 //
 //  Created by Alin Lupascu on 7/8/24.
 //
 
 import Foundation
 import SwiftUI
+
+
+
+
 
 public struct Release: Codable, Identifiable {
     public let id: Int
@@ -26,8 +30,37 @@ public struct Release: Codable, Identifiable {
     public static let issueRegex: NSRegularExpression? = try? NSRegularExpression(pattern: "#(\\d+)")
 
     public func modifiedBody(owner: String, repo: String) -> NSAttributedString? {
+        let pattern = #"!\[.*?\]\((.*?)\)"#
+        let regex = try? NSRegularExpression(pattern: pattern)
+        var resolvedURLs: [URL] = []
+
+        if let regex = regex {
+            let matches = regex.matches(in: body, range: NSRange(body.startIndex..., in: body))
+            for match in matches {
+                if let range = Range(match.range(at: 1), in: body),
+                   let initialURL = URL(string: String(body[range])) {
+                    let semaphore = DispatchSemaphore(value: 0)
+                    let session = URLSession(configuration: .default, delegate: nil, delegateQueue: nil)
+                    var finalURL: URL?
+                    let task = session.dataTask(with: initialURL) { _, response, _ in
+                        finalURL = response?.url
+                        semaphore.signal()
+                    }
+                    task.resume()
+                    semaphore.wait()
+                    if let finalURL = finalURL {
+                        resolvedURLs.append(finalURL)
+                    }
+                }
+            }
+        }
+
+        ImageURLCollector.shared.urls = resolvedURLs
+
+        let cleanedBody = body.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
+        let lines = cleanedBody.components(separatedBy: .newlines)
+
         let result = NSMutableAttributedString()
-        let lines = body.components(separatedBy: .newlines)
 
         for line in lines {
             if !line.isEmpty {
@@ -65,11 +98,12 @@ public struct Release: Codable, Identifiable {
 
         // Check if the line is a markdown image syntax
         if line.hasPrefix("![") && line.contains("](") && line.hasSuffix(")") {
+            //            return NSMutableAttributedString(string: "")
             // Parse the alt text and URL from the markdown
             guard let altTextStart = line.firstIndex(of: "["),
-                    let altTextEnd = line.firstIndex(of: "]"),
+                  let altTextEnd = line.firstIndex(of: "]"),
                   let urlStart = line.firstIndex(of: "("),
-                    let urlEnd = line.lastIndex(of: ")") else {
+                  let urlEnd = line.lastIndex(of: ")") else {
                 return NSMutableAttributedString(string: line)
             }
             let urlString = String(line[line.index(after: urlStart)..<urlEnd])
@@ -97,7 +131,7 @@ public struct Release: Codable, Identifiable {
 
                 // Optional: Change the color to indicate it's a link
                 let linkRange = (attributedLine.string as NSString).range(of: fullIssueNumber)
-//                attributedLine.addAttribute(.foregroundColor, value: NSColor.blue, range: linkRange)
+                //                attributedLine.addAttribute(.foregroundColor, value: NSColor.blue, range: linkRange)
                 attributedLine.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: linkRange)
             }
         }
@@ -116,7 +150,7 @@ public struct Release: Codable, Identifiable {
         return attributedLine
     }
 
-    
+
 
 }
 
@@ -132,7 +166,9 @@ extension NSMutableAttributedString {
     }
 }
 
+// Sheet update release notes view for single update
 struct ReleaseNotesView: View {
+    @StateObject private var collector = ImageURLCollector()
     let release: Release?
     let owner: String
     let repo: String
@@ -141,17 +177,75 @@ struct ReleaseNotesView: View {
         ScrollView {
             if let release = release,
                let releaseNotes = release.modifiedBody(owner: owner, repo: repo) {
-                Text(AttributedString(releaseNotes))
-                    .font(.body)
-                    .multilineTextAlignment(.leading)
-                    .padding()
-                    .textSelection(.disabled)
+                VStack(spacing: 0) {
+                    Text(AttributedString(releaseNotes))
+                        .font(.body)
+                        .multilineTextAlignment(.leading)
+                        .textSelection(.disabled)
+                    
+                    ReleaseImagesView(markdown: release.body)
+                }
+                .padding()
+                .onAppear {
+                    collector.reset()
+                    collector.collect(from: release.body)
+                }
             } else {
                 Text("No release information")
                     .font(.body)
                     .multilineTextAlignment(.leading)
                     .padding(20)
             }
+        }
+    }
+}
+
+class ImageURLCollector: ObservableObject {
+    static let shared = ImageURLCollector()
+    @Published var urls: [URL] = []
+
+    func reset() {
+        urls.removeAll()
+    }
+
+    func collect(from markdown: String) {
+        let pattern = #"!\[.*?\]\((.*?)\)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return }
+
+        let matches = regex.matches(in: markdown, range: NSRange(markdown.startIndex..., in: markdown))
+
+        for match in matches {
+            if let range = Range(match.range(at: 1), in: markdown),
+               let initialURL = URL(string: String(markdown[range])) {
+                resolveRedirect(for: initialURL) { resolvedURL in
+                    if let resolvedURL = resolvedURL {
+                        DispatchQueue.main.async {
+                            self.urls.append(resolvedURL)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func resolveRedirect(for url: URL, completion: @escaping (URL?) -> Void) {
+        let session = URLSession(configuration: .default, delegate: RedirectFollower(completion: completion), delegateQueue: nil)
+        session.dataTask(with: url).resume()
+    }
+
+    private class RedirectFollower: NSObject, URLSessionTaskDelegate {
+        private let completion: (URL?) -> Void
+
+        init(completion: @escaping (URL?) -> Void) {
+            self.completion = completion
+        }
+
+        func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+            completionHandler(request)
+        }
+
+        func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+            completion(task.currentRequest?.url)
         }
     }
 }
