@@ -8,10 +8,6 @@
 import Foundation
 import SwiftUI
 
-
-
-
-
 public struct Release: Codable, Identifiable {
     public let id: Int
     public let tagName: String
@@ -68,49 +64,26 @@ public struct Release: Codable, Identifiable {
                 result.append(attributedLine)
                 result.append(NSAttributedString(string: "\n"))
             }
-
         }
 
         return result
     }
 
-    // Function to handle each pattern
     private func handlePattern(line: String, owner: String, repo: String) -> NSMutableAttributedString {
         let attributedLine = NSMutableAttributedString(string: line)
 
         // Check for headers and apply styles
-        if line.starts(with: "### ") {
-            return headerAttributedString(from: line.dropFirst(4), size: 18)
-        } else if line.starts(with: "## ") {
-            return headerAttributedString(from: line.dropFirst(3), size: 18)
+        if line.starts(with: "### ") || line.starts(with: "## ") || line.starts(with: "# ") {
+            let headerLevel = line.prefix(while: { $0 == "#" }).count
+            let text = line.replacingOccurrences(of: String(repeating: "#", count: headerLevel) + " ", with: "")
+            return headerAttributedString(from: text, size: 18)
         }
 
         // Replace checkboxes and bullet points
-        if line.contains("- []") {
-            let replaced = line.replacingOccurrences(of: "- []", with: "•")
-            attributedLine.mutableString.setString(replaced)
-        }
-
-        if line.contains("- [x]") {
+        if line.contains("- [ ]") || line.contains("- [x]") {
             let replaced = line.replacingOccurrences(of: "- [x]", with: "•")
+                .replacingOccurrences(of: "- [ ]", with: "•")
             attributedLine.mutableString.setString(replaced)
-        }
-
-        // Check if the line is a markdown image syntax
-        if line.hasPrefix("![") && line.contains("](") && line.hasSuffix(")") {
-            //            return NSMutableAttributedString(string: "")
-            // Parse the alt text and URL from the markdown
-            guard let altTextStart = line.firstIndex(of: "["),
-                  let altTextEnd = line.firstIndex(of: "]"),
-                  let urlStart = line.firstIndex(of: "("),
-                  let urlEnd = line.lastIndex(of: ")") else {
-                return NSMutableAttributedString(string: line)
-            }
-            let urlString = String(line[line.index(after: urlStart)..<urlEnd])
-            let replacedText = "\n🏞️ View Screenshot\n"
-            let newAttributedLine = NSMutableAttributedString(string: replacedText)
-            newAttributedLine.addAttribute(.link, value: urlString, range: NSRange(location: 0, length: newAttributedLine.length))
-            return newAttributedLine
         }
 
         // Handle issue numbers and make them clickable
@@ -131,7 +104,6 @@ public struct Release: Codable, Identifiable {
 
                 // Optional: Change the color to indicate it's a link
                 let linkRange = (attributedLine.string as NSString).range(of: fullIssueNumber)
-                //                attributedLine.addAttribute(.foregroundColor, value: NSColor.blue, range: linkRange)
                 attributedLine.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: linkRange)
             }
         }
@@ -139,8 +111,8 @@ public struct Release: Codable, Identifiable {
         return attributedLine
     }
 
-    private func headerAttributedString(from line: Substring, size: CGFloat) -> NSMutableAttributedString {
-        let attributedLine = NSMutableAttributedString(string: String(line))
+    private func headerAttributedString(from line: String, size: CGFloat) -> NSMutableAttributedString {
+        let attributedLine = NSMutableAttributedString(string: line)
         attributedLine.addAttribute(.font, value: NSFont.systemFont(ofSize: size, weight: .bold), range: NSRange(location: 0, length: attributedLine.length))
         attributedLine.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: attributedLine.length))
 
@@ -149,9 +121,6 @@ public struct Release: Codable, Identifiable {
 
         return attributedLine
     }
-
-
-
 }
 
 extension NSMutableAttributedString {
@@ -167,7 +136,7 @@ extension NSMutableAttributedString {
 }
 
 // Sheet update release notes view for single update
-struct ReleaseNotesView: View {
+struct SingleReleaseNotesView: View {
     @StateObject private var collector = ImageURLCollector()
     let release: Release?
     let owner: String
@@ -177,14 +146,15 @@ struct ReleaseNotesView: View {
         ScrollView {
             if let release = release,
                let releaseNotes = release.modifiedBody(owner: owner, repo: repo) {
-                VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text(AttributedString(releaseNotes))
                         .font(.body)
                         .multilineTextAlignment(.leading)
                         .textSelection(.disabled)
-                    
+
                     ReleaseImagesView(markdown: release.body)
                 }
+                .frame(width: .infinity)
                 .padding()
                 .onAppear {
                     collector.reset()
@@ -205,7 +175,7 @@ class ImageURLCollector: ObservableObject {
     @Published var urls: [URL] = []
 
     func reset() {
-        urls.removeAll()
+        urls = []
     }
 
     func collect(from markdown: String) {
@@ -217,35 +187,14 @@ class ImageURLCollector: ObservableObject {
         for match in matches {
             if let range = Range(match.range(at: 1), in: markdown),
                let initialURL = URL(string: String(markdown[range])) {
-                resolveRedirect(for: initialURL) { resolvedURL in
-                    if let resolvedURL = resolvedURL {
+                Task {
+                    if let resolvedURL = await initialURL.resolvedRedirect() {
                         DispatchQueue.main.async {
                             self.urls.append(resolvedURL)
                         }
                     }
                 }
             }
-        }
-    }
-
-    private func resolveRedirect(for url: URL, completion: @escaping (URL?) -> Void) {
-        let session = URLSession(configuration: .default, delegate: RedirectFollower(completion: completion), delegateQueue: nil)
-        session.dataTask(with: url).resume()
-    }
-
-    private class RedirectFollower: NSObject, URLSessionTaskDelegate {
-        private let completion: (URL?) -> Void
-
-        init(completion: @escaping (URL?) -> Void) {
-            self.completion = completion
-        }
-
-        func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
-            completionHandler(request)
-        }
-
-        func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-            completion(task.currentRequest?.url)
         }
     }
 }
@@ -287,5 +236,35 @@ public enum UpdateFrequency: String, CaseIterable, Identifiable {
         guard let updateInterval = self.interval else { return }
         let newUpdateDate = Calendar.current.startOfDay(for: Date().addingTimeInterval(updateInterval))
         UserDefaults.standard.set(newUpdateDate.timeIntervalSinceReferenceDate, forKey: DefaultsKeys.nextUpdateDate)
+    }
+}
+
+//MARK: https://jonathandionne.com/posts/swift-snippet-url-resolver/
+extension URL {
+    func resolvedRedirect() async -> URL? {
+        await withCheckedContinuation { continuation in
+            var request = URLRequest(url: self)
+            request.httpMethod = "HEAD"
+            request.setValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
+            request.setValue("*/*", forHTTPHeaderField: "Accept")
+            request.setValue("gzip, deflate, br", forHTTPHeaderField: "Accept-Encoding")
+            request.setValue("keep-alive", forHTTPHeaderField: "Connection")
+            request.setValue(self.host, forHTTPHeaderField: "Host")
+
+            let task = URLSession.shared.dataTask(with: request) { _, response, error in
+                guard let httpResponse = response as? HTTPURLResponse, error == nil else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                if let location = httpResponse.value(forHTTPHeaderField: "Location"),
+                   let redirectedURL = URL(string: location) {
+                    continuation.resume(returning: redirectedURL)
+                } else {
+                    continuation.resume(returning: httpResponse.url)
+                }
+            }
+            task.resume()
+        }
     }
 }

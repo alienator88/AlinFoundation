@@ -66,7 +66,7 @@ struct UpdateView: View {
 
             Divider()
 
-            ReleaseNotesView(
+            SingleReleaseNotesView(
                 release: updaterService.releases.first,
                 owner: updaterService.owner,
                 repo: updaterService.repo
@@ -273,7 +273,7 @@ public struct FrequencyView: View {
 }
 
 // Release notes view for all release notes
-public struct ReleasesView: View {
+public struct RecentReleasesView: View {
     @ObservedObject var updater: Updater
 
     public init(updater: Updater) {
@@ -285,7 +285,7 @@ public struct ReleasesView: View {
         VStack {
             if !updater.releases.isEmpty {
                 ScrollView {
-                    VStack() {
+                    VStack(alignment: .leading) {
                         ForEach(updater.releases, id: \.id) { release in
                             VStack(alignment: .leading, spacing: 0) {
                                 LabeledDivider(label: "\(release.tagName)")
@@ -308,6 +308,7 @@ public struct ReleasesView: View {
                             }
                         }
                     }
+                    .frame(width: .infinity)
                     .padding()
                 }
             } else {
@@ -315,9 +316,12 @@ public struct ReleasesView: View {
                     Text("No releases to display")
                         .font(.title)
                         .foregroundColor(.primary)
-                    Text("Updater frequency is set to Never")
-                        .font(.body)
-                        .foregroundColor(.primary.opacity(0.5))
+                    if updater.updateFrequency == .none {
+                        Text("Updater frequency is set to Never")
+                            .font(.body)
+                            .foregroundColor(.primary.opacity(0.5))
+                    }
+
                 }
                 .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -342,12 +346,38 @@ struct ReleaseImagesView: View {
     var body: some View {
         VStack {
             ForEach(collector.urls, id: \.self) { resolvedURL in
-                AsyncImage(url: resolvedURL) { image in
-                    image.resizable()
-                        .scaledToFit()
-                        .cornerRadius(8)
-                } placeholder: {
-                    ProgressView()
+                AsyncImage(url: resolvedURL) { phase in
+                    switch phase {
+                    case .empty:
+                        EmptyView()
+                    case .success(let image):
+                        image.resizable()
+                            .scaledToFit()
+                            .cornerRadius(8)
+                    case .failure(let error):
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 30, height: 30)
+                            Text("Failed to load image, click to open")
+                                .font(.caption)
+                        }
+                        .padding(.horizontal, 20)
+                        .onTapGesture {
+                            NSWorkspace.shared.open(resolvedURL)
+                        }
+                        .onAppear {
+                            printOS("❌ Failed to load image: \(resolvedURL)")
+                            if let error = error as? URLError {
+                                printOS("URLError: \(error.code.rawValue) — \(error.localizedDescription)")
+                            } else {
+                                printOS("Error: \(String(describing: error))")
+                            }
+                        }
+                    @unknown default:
+                        EmptyView()
+                    }
                 }
             }
         }

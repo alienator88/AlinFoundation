@@ -225,8 +225,13 @@ public class Updater: ObservableObject {
                 return
             }
 
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                printOS("Updater HTTP error: \(response.debugDescription)", category: LogCategory.updater)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                printOS("Updater: invalid response type", category: LogCategory.updater)
+                return
+            }
+
+            guard httpResponse.statusCode == 200 else {
+                printOS("Updater HTTP error: \(httpResponse.statusCode) — \(httpResponse.url?.absoluteString ?? "No URL")", category: LogCategory.updater)
                 return
             }
 
