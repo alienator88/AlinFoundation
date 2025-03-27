@@ -8,37 +8,40 @@ import AppKit
 import SwiftUI
 
 public class WindowManager {
-    private var window: NSWindow?
+    public static let shared = WindowManager()
+    private var windows: [String: NSWindow] = [:]
 
     public init() {}
 
     // Open a new window with the specified SwiftUI view and optional size
-    public func open<Content: View>(with view: Content, width: CGFloat = 400, height: CGFloat = 300, material: NSVisualEffectView.Material? = nil) {
+    public func open<Content: View>(id: String = "window", with view: Content, width: CGFloat = 400, height: CGFloat = 300, material: NSVisualEffectView.Material? = nil) {
         // Close and nil out existing window
-        window?.close()
-        window = nil
+        windows[id]?.close()
+        windows[id] = nil
 
         // Create a new window
         let hostingController = NSHostingController(rootView: view)
-        window = NSWindow(contentViewController: hostingController)
-        window?.setContentSize(NSSize(width: width, height: height))
-        window?.styleMask = [.titled, .closable, .fullSizeContentView]
-        window?.titlebarAppearsTransparent = true
-        window?.titleVisibility = .hidden
-        window?.isReleasedWhenClosed = false
-        window?.center()
+        let newWindow = NSWindow(contentViewController: hostingController)
+        newWindow.setContentSize(NSSize(width: width, height: height))
+        newWindow.styleMask = [.titled, .closable, .fullSizeContentView]
+        newWindow.titlebarAppearsTransparent = true
+        newWindow.titleVisibility = .hidden
+        newWindow.level = .normal
+        newWindow.isReleasedWhenClosed = false
+        newWindow.center()
 
         if let material = material {
-            setVisualEffectBackground(for: window!, material: material)
+            setVisualEffectBackground(for: newWindow, material: material)
         }
-
-        window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        newWindow.makeKeyAndOrderFront(nil)
+        windows[id] = newWindow
     }
 
     // Close the window if it exists
-    public func close() {
-        window?.close()
-        window = nil
+    public func close(id: String = "window") {
+        windows[id]?.close()
+        windows[id] = nil
     }
 
     // Helper to set a visual effect background

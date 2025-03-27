@@ -368,12 +368,13 @@ struct ReleaseImagesView: View {
                             NSWorkspace.shared.open(resolvedURL)
                         }
                         .onAppear {
-                            printOS("❌ Failed to load image: \(resolvedURL)")
+//                            printOS("❌ Failed to load image: \(resolvedURL)")
                             if let error = error as? URLError {
                                 printOS("URLError: \(error.code.rawValue) — \(error.localizedDescription)")
-                            } else {
-                                printOS("Error: \(String(describing: error))")
                             }
+//                            else {
+//                                printOS("Error: \(String(describing: error))")
+//                            }
                         }
                     @unknown default:
                         EmptyView()
