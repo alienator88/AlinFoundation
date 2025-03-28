@@ -15,6 +15,13 @@ public class WindowManager {
 
     // Open a new window with the specified SwiftUI view and optional size
     public func open<Content: View>(id: String = "window", with view: Content, width: CGFloat = 400, height: CGFloat = 300, material: NSVisualEffectView.Material? = nil) {
+        // Show current open if already open
+        if let existingWindow = windows[id], existingWindow.isVisible {
+            existingWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        
         // Close and nil out existing window
         windows[id]?.close()
         windows[id] = nil
