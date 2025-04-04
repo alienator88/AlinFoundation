@@ -13,30 +13,30 @@ public protocol HelperToolProtocol {
     func runCommand(command: String, withReply reply: @escaping (Bool, String) -> Void)
 }
 
-enum HelperToolAction {
+public enum HelperToolAction {
     case none      // Only check status
     case install   // Install the helper tool
     case uninstall // Uninstall the helper tool
 }
 
-class HelperToolManager: ObservableObject {
-    static let shared = HelperToolManager()
+public class HelperToolManager: ObservableObject {
+    public static let shared = HelperToolManager()
     private var helperConnection: NSXPCConnection?
     let helperToolIdentifier = "\(Bundle.main.bundleIdentifier ?? "com.example.app").Helper"
-    @Published var isHelperToolInstalled: Bool = false
-    @Published var message: String = "Checking..."
-    var status: String {
+    @Published public var isHelperToolInstalled: Bool = false
+    @Published public var message: String = "Checking..."
+    public var status: String {
         return isHelperToolInstalled ? "Enabled" : "Disabled"
     }
 
-    init() {
+    public init() {
         Task {
             await manageHelperTool()
         }
     }
 
     // Function to manage the helper tool installation/uninstallation
-    func manageHelperTool(action: HelperToolAction = .none) async {
+    public func manageHelperTool(action: HelperToolAction = .none) async {
         let plistName = "\(helperToolIdentifier).plist"
         let service = SMAppService.daemon(plistName: plistName)
         var occurredError: NSError?
@@ -103,12 +103,12 @@ class HelperToolManager: ObservableObject {
     }
 
     // Function to open Settings > Login Items
-    func openSMSettings() {
+    public func openSMSettings() {
         SMAppService.openSystemSettingsLoginItems()
     }
 
     // Function to run privileged commands
-    func runCommand(_ command: String, skipHelperCheck: Bool = false) async -> (Bool, String) {
+    public func runCommand(_ command: String, skipHelperCheck: Bool = false) async -> (Bool, String) {
         if !skipHelperCheck && !isHelperToolInstalled {
             return (false, "XPC: Helper tool is not installed")
         }
@@ -150,7 +150,7 @@ class HelperToolManager: ObservableObject {
 
 
     // Helper to update helper status messages
-    func updateStatusMessages(with service: SMAppService, occurredError: NSError?) async {
+    private func updateStatusMessages(with service: SMAppService, occurredError: NSError?) async {
         if let nsError = occurredError {
             switch nsError.code {
             case kSMErrorAlreadyRegistered:
