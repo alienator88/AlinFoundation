@@ -401,6 +401,14 @@ public func printCallStack(simple: Bool = true) {
     }
 }
 
+// Function speed test for checking how fast code block completes
+public func checkBlockSpeed(label: String = "", _ block: () -> Void) {
+    let startTime = CFAbsoluteTimeGetCurrent()
+    block()
+    let duration = CFAbsoluteTimeGetCurrent() - startTime
+    printOS("\(label.isEmpty ? "Function" : label) took \(duration) seconds")
+}
+
 // Only process supported files
 public func isSupportedFileType(at path: String) -> Bool {
     let fileManager = FileManager.default
