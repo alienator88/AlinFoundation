@@ -24,7 +24,7 @@ public func performPrivilegedCommands(commands: String) -> (Bool, String) {
     var rights = withUnsafeMutablePointer(to: &item) { ptr in
         AuthorizationRights(count: 1, items: ptr)
     }
-    status = AuthorizationCopyRights(authRef, &rights, nil, [.interactionAllowed, .extendRights], nil)
+    status = AuthorizationCopyRights(authRef, &rights, nil, [.interactionAllowed, .preAuthorize, .extendRights], nil)
     guard status == errAuthorizationSuccess else { return (false, "Authorization copy rights failed with code \(status)") }
     
     let (execStatus, output) = executeWithPrivileges(authorization: authRef, cmd: "/bin/sh", arguments: ["-c", commands])

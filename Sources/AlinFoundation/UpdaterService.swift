@@ -199,16 +199,24 @@ class UpdaterService: ObservableObject {
             printOS("Error replacing the app: \(error)", category: LogCategory.updater)
 
             // If an error occurs, run all commands with elevated privileges
-            let commands = "rm -rf \"\(appBundle)\" && ditto -xk \"\(fileURL)\" \"\(appDirectory)\" && rm -f \"\(fileURL)\""
-            let result = performPrivilegedCommands(commands: commands)
-            if result.0 {
-                DispatchQueue.main.async {
-                    self.progressBar.0 = "Update completed".localized()
-                    self.progressBar.1 = 1.0
-                    self.updater?.setNextUpdateDate()
+            let script = """
+            do shell script "rm -rf '\(appBundle)' && ditto -xk '\(fileURL)' '\(appDirectory)' && rm -f '\(fileURL)'" with administrator privileges
+            """
+            var error: NSDictionary?
+            if let appleScript = NSAppleScript(source: script) {
+                appleScript.executeAndReturnError(&error)
+                if error == nil {
+                    DispatchQueue.main.async {
+                        self.progressBar.0 = "Update completed".localized()
+                        self.progressBar.1 = 1.0
+                        self.updater?.setNextUpdateDate()
+                    }
+                } else {
+                    printOS("Updater AppleScript failed: \(error!)", category: LogCategory.updater)
+                    self.progressBar.0 = "Failed to update, check debug logs".localized()
                 }
             } else {
-                printOS("Privileged commands failed: \(result.1)", category: LogCategory.updater)
+                printOS("Updater AppleScript init failed", category: LogCategory.updater)
                 self.progressBar.0 = "Failed to update, check debug logs".localized()
             }
         }
