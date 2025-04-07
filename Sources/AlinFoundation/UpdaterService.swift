@@ -208,7 +208,7 @@ class UpdaterService: ObservableObject {
                     self.updater?.setNextUpdateDate()
                 }
             } else {
-                printOS("Privileged commands failed", category: LogCategory.updater)
+                printOS("Privileged commands failed: \(result.1)", category: LogCategory.updater)
                 self.progressBar.0 = "Failed to update, check debug logs".localized()
             }
         }
