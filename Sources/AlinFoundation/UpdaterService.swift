@@ -198,27 +198,20 @@ class UpdaterService: ObservableObject {
         } catch {
             printOS("Error replacing the app: \(error)", category: LogCategory.updater)
 
-            // If an error occurs, run all commands with elevated privileges
-            let script = """
-            do shell script "rm -rf '\(appBundle)' && ditto -xk '\(fileURL)' '\(appDirectory)' && rm -f '\(fileURL)'" with administrator privileges
-            """
-            var error: NSDictionary?
-            if let appleScript = NSAppleScript(source: script) {
-                appleScript.executeAndReturnError(&error)
-                if error == nil {
-                    DispatchQueue.main.async {
-                        self.progressBar.0 = "Update completed".localized()
-                        self.progressBar.1 = 1.0
-                        self.updater?.setNextUpdateDate()
-                    }
-                } else {
-                    printOS("Updater AppleScript failed: \(error!)", category: LogCategory.updater)
-                    self.progressBar.0 = "Failed to update, check debug logs".localized()
+            let command = "rm -rf '\(appBundle)' && ditto -xk '\(fileURL)' '\(appDirectory)' && rm -f '\(fileURL)'"
+            let (success, output) = runOSACommand(command)
+
+            if success {
+                DispatchQueue.main.async {
+                    self.progressBar.0 = "Update completed".localized()
+                    self.progressBar.1 = 1.0
+                    self.updater?.setNextUpdateDate()
                 }
             } else {
-                printOS("Updater AppleScript init failed", category: LogCategory.updater)
+                printOS("Updater OSA failed: \(output)", category: LogCategory.updater)
                 self.progressBar.0 = "Failed to update, check debug logs".localized()
             }
+
         }
     }
 }
@@ -240,5 +233,27 @@ public func runShellCommand(_ command: String) throws {
     process.waitUntilExit()
     if process.terminationStatus != 0 {
         throw NSError(domain: "ShellCommandError", code: Int(process.terminationStatus), userInfo: nil)
+    }
+}
+
+func runOSACommand(_ shellCommand: String) -> (Bool, String?) {
+    let appleScript = "do shell script \"\(shellCommand.replacingOccurrences(of: "\"", with: "\\\""))\" with administrator privileges"
+    let task = Process()
+    task.launchPath = "/usr/bin/osascript"
+    task.arguments = ["-e", appleScript]
+
+    let pipe = Pipe()
+    task.standardOutput = pipe
+    task.standardError = pipe
+
+    do {
+        try task.run()
+        task.waitUntilExit()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (task.terminationStatus == 0, output)
+    } catch {
+        printOS("osascript failed: \(error)")
+        return (false, nil)
     }
 }
