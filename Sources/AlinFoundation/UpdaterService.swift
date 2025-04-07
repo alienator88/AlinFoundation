@@ -37,6 +37,10 @@ class UpdaterService: ObservableObject {
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             guard let self = self, let data = data else { return }
 
+            if handleGitHubResponseErrors(response: response, error: error) {
+                return
+            }
+
             if let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) {
                 DispatchQueue.main.async {
                     self.releases = Array(decodedResponse.prefix(3))
@@ -50,14 +54,7 @@ class UpdaterService: ObservableObject {
         var request = makeRequest(url: url, token: token)
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             guard let self = self else { return }
-            if let error = error {
-                // Handle network error
-                printOS("Updater Network error: \(error.localizedDescription)", category: LogCategory.updater)
-                return
-            }
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                // Handle non-200 HTTP response
-                printOS("Updater HTTP error: \(response.debugDescription)", category: LogCategory.updater)
+            if handleGitHubResponseErrors(response: response, error: error) {
                 return
             }
             guard let data = data else { return }
@@ -224,6 +221,27 @@ public func makeRequest(url: URL, token: String) -> URLRequest {
     }
     return request
 }
+
+// Helper for github responses
+public func handleGitHubResponseErrors(response: URLResponse?, error: Error?) -> Bool {
+    if let error = error {
+        printOS("Updater Network error: \(error.localizedDescription)", category: LogCategory.updater)
+        return true
+    }
+
+    guard let httpResponse = response as? HTTPURLResponse else {
+        printOS("Updater: invalid response type", category: LogCategory.updater)
+        return true
+    }
+
+    guard httpResponse.statusCode == 200 else {
+        printOS("Updater HTTP error: \(httpResponse.statusCode) — \(httpResponse.url?.absoluteString ?? "No URL")", category: LogCategory.updater)
+        return true
+    }
+
+    return false
+}
+
 
 public func runShellCommand(_ command: String) throws {
     let process = Process()

@@ -220,18 +220,7 @@ public class Updater: ObservableObject {
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             guard let self = self else { return }
 
-            if let error = error {
-                printOS("Updater Network error: \(error.localizedDescription)", category: LogCategory.updater)
-                return
-            }
-
-            guard let httpResponse = response as? HTTPURLResponse else {
-                printOS("Updater: invalid response type", category: LogCategory.updater)
-                return
-            }
-
-            guard httpResponse.statusCode == 200 else {
-                printOS("Updater HTTP error: \(httpResponse.statusCode) — \(httpResponse.url?.absoluteString ?? "No URL")", category: LogCategory.updater)
+            if handleGitHubResponseErrors(response: response, error: error) {
                 return
             }
 
