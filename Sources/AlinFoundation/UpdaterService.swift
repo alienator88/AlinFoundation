@@ -237,7 +237,8 @@ public func runShellCommand(_ command: String) throws {
 }
 
 func runOSACommand(_ shellCommand: String) -> (Bool, String?) {
-    let appleScript = "do shell script \"\(shellCommand.replacingOccurrences(of: "\"", with: "\\\""))\" with administrator privileges"
+    let prompt = "\(Bundle.main.name) needs administrator permission to complete the update!"
+    let appleScript = "do shell script \"\(shellCommand.replacingOccurrences(of: "\"", with: "\\\""))\" with administrator privileges with prompt \"\(prompt)\""
     let task = Process()
     task.launchPath = "/usr/bin/osascript"
     task.arguments = ["-e", appleScript]
