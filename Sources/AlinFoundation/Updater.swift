@@ -80,6 +80,8 @@ public class Updater: ObservableObject {
         } else {
             initializeUpdaterService()
         }
+
+        ensureApplicationSupportFolderExists()
     }
 
     private func loadToken() {
