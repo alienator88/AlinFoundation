@@ -343,30 +343,29 @@ public func formatByte(size: Int64) -> (human: String, byte: String) {
 
 }
 
-// Alert for Trash
-public func showCustomAlert(enabled: Bool = true, title: String, message: String, style: NSAlert.Style, onOk: (() -> Void)? = nil) {
+// Custom alerts
+public func showCustomAlert(enabled: Bool = true, title: String, message: String, style: NSAlert.Style, onOk: (() -> Void)? = nil, onCancel: (() -> Void)? = nil) {
     updateOnMain {
         if enabled {
             let alert = NSAlert()
             if let appIcon = NSApplication.shared.applicationIconImage.copy() as? NSImage {
-                appIcon.size = NSSize(width: 128, height: 128) // choose a size that works for you
+                appIcon.size = NSSize(width: 128, height: 128)
                 alert.icon = appIcon
             }
             alert.messageText = title
             alert.informativeText = message
             alert.alertStyle = style
 
-            // Add "Okay" and "Cancel" buttons
             alert.addButton(withTitle: NSLocalizedString("Okay", comment: "Confirm action"))
-            // Only add the "Cancel" button if onOk is provided
-            if onOk != nil {
+            if onOk != nil || onCancel != nil {
                 alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel action"))
             }
 
-            // Present the alert and execute closure if "Okay" is pressed
             let response = alert.runModal()
             if response == .alertFirstButtonReturn {
                 onOk?()
+            } else {
+                onCancel?()
             }
         } else {
             onOk?()
