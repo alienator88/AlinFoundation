@@ -110,7 +110,7 @@ public class PermissionManager: ObservableObject {
                 }
             } catch let error {
                 DispatchQueue.main.async {
-                    printOS(error)
+                    printOS("Full Disk Permission: ❌")
                     completion(false)  // Full Disk Access is denied
                 }
             }
@@ -132,6 +132,9 @@ public class PermissionManager: ObservableObject {
         let checkOptPrompt = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as NSString
         let options = [checkOptPrompt: false]
         let accessibilityEnabled = AXIsProcessTrustedWithOptions(options as CFDictionary)
+        if !accessibilityEnabled {
+            printOS("Accessibility Permission: ❌")
+        }
         return accessibilityEnabled
     }
 
@@ -146,6 +149,7 @@ public class PermissionManager: ObservableObject {
                 // Check if the error is related to permission
                 let errorNumber = error[NSAppleScript.errorNumber] as? Int
                 hasPermission = (errorNumber != -1743)
+                printOS("Automation Permission: ❌")
             } else {
                 hasPermission = true
             }
