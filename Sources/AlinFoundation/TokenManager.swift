@@ -37,6 +37,7 @@ public class TokenManager: ObservableObject {
             completion(false)
             return
         }
+
         let data = Data(token.utf8)
         let query = [
             kSecClass as String: kSecClassGenericPassword,
@@ -46,11 +47,19 @@ public class TokenManager: ObservableObject {
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked
         ] as CFDictionary
 
-        // Remove any existing token
-        SecItemDelete(query)
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: self.service,
+            kSecAttrAccount as String: self.account
+        ]
 
-        // Attempt to save the new token
-        let status = SecItemAdd(query, nil)
+        var status = SecItemAdd(query, nil)
+
+        if status == errSecDuplicateItem {
+            SecItemDelete(deleteQuery as CFDictionary)
+            status = SecItemAdd(query, nil)
+        }
+
         DispatchQueue.main.async {
             if status == noErr {
                 completion(true)
