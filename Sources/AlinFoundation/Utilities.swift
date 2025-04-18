@@ -344,7 +344,7 @@ public func formatByte(size: Int64) -> (human: String, byte: String) {
 }
 
 // Custom alerts
-public func showCustomAlert(enabled: Bool = true, title: String, message: String, style: NSAlert.Style, onOk: (() -> Void)? = nil, onCancel: (() -> Void)? = nil) {
+public func showCustomAlert(enabled: Bool = true, title: String, message: String, okText: String = "Okay", style: NSAlert.Style, onOk: (() -> Void)? = nil, onCancel: (() -> Void)? = nil) {
     updateOnMain {
         if enabled {
             let alert = NSAlert()
@@ -356,7 +356,7 @@ public func showCustomAlert(enabled: Bool = true, title: String, message: String
             alert.informativeText = message
             alert.alertStyle = style
 
-            alert.addButton(withTitle: NSLocalizedString("Okay", comment: "Confirm action"))
+            alert.addButton(withTitle: NSLocalizedString(okText, comment: "Confirm action"))
             if onOk != nil || onCancel != nil {
                 alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel action"))
             }
