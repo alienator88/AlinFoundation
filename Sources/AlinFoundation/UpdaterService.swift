@@ -195,7 +195,7 @@ class UpdaterService: ObservableObject {
         } catch {
             printOS("Error replacing the app: \(error)", category: LogCategory.updater)
 
-            let command = "rm -rf '\(appBundle)' && ditto -xk '\(fileURL)' '\(appDirectory)' && rm -f '\(fileURL)'"
+            let command = "rm -rf \\\"\(appBundle)\\\" && ditto -xk \\\"\(fileURL)\\\" \\\"\(appDirectory)\\\" && rm -f \\\"\(fileURL)\\\""
             let (success, output) = runOSACommand(command)
 
             if success {
@@ -256,7 +256,7 @@ public func runShellCommand(_ command: String) throws {
 
 func runOSACommand(_ shellCommand: String) -> (Bool, String?) {
     let prompt = "\(Bundle.main.name) needs permission to complete the update"
-    let appleScript = "do shell script \"\(shellCommand.replacingOccurrences(of: "\"", with: "\\\""))\" with administrator privileges with prompt \"\(prompt)\""
+    let appleScript = "do shell script \"\(shellCommand)\" with administrator privileges with prompt \"\(prompt)\""
     let task = Process()
     task.launchPath = "/usr/bin/osascript"
     task.arguments = ["-e", appleScript]
