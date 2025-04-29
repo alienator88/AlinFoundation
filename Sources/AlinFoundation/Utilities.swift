@@ -515,11 +515,11 @@ public func copyToClipboard(_ text: String) {
 
 //MARK: ====================================================== EXTENSIONS ======================================================
 
-// Localize Text strings
+// Localize Text strings for SwiftUI compatibility
 public extension String {
-    /// Returns a localized version of the string using NSLocalizedString.
-    func localized(comment: String = "") -> String {
-        return NSLocalizedString(self, comment: comment)
+    /// Returns a SwiftUI-compatible localized key.
+    var localizedKey: LocalizedStringKey {
+        LocalizedStringKey(self)
     }
 }
 
