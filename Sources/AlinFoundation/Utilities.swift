@@ -517,9 +517,8 @@ public func copyToClipboard(_ text: String) {
 
 // Localize Text strings for SwiftUI compatibility
 public extension String {
-    /// Returns a SwiftUI-compatible localized key.
-    func localized() -> LocalizedStringKey {
-        LocalizedStringKey(self)
+    func localized(comment: String = "") -> String {
+        NSLocalizedString(self, comment: comment)
     }
 }
 
