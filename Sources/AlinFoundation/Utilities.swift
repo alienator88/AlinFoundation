@@ -14,11 +14,20 @@ import CoreImage
 //MARK: ====================================================== FUNCTIONS ======================================================
 
 
-// Run shell commands
-
-/// runShell("ls -al /") { output in
-///   print(output)
-/// }
+public func printOS(_ items: Any..., separator: String = " ", category: String = LogCategory.general, logType: OSLogType = .error) {
+    let message = items.map { "\($0)" }.joined(separator: separator)
+    let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.alienator88.fallback", category: category)
+    logger.log(level: logType, "\(message, privacy: .public)")
+    Swift.print(message)
+    // Store the log message in memory if LogStorage is initialized
+    if LogStorage.shared != nil {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "[MMM d, h:mm:ss a]"
+        let timestamp = formatter.string(from: Date())
+        let datedMessage = "\(timestamp) \(message)"
+        LogStorage.shared.addLog(datedMessage)
+    }
+}
 
 public func runShell(_ command: String, completion: @escaping (String) -> Void) {
     // Create a new process

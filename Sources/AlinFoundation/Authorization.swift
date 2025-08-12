@@ -34,7 +34,6 @@ public func performPrivilegedCommands(commands: String) -> (Bool, String) {
 public func executeWithPrivileges(authorization: AuthorizationRef, cmd: String, arguments: [String]) -> (OSStatus, String) {
     let RTLD_DEFAULT = dlopen(nil, RTLD_NOW)
     guard let funcPtr = dlsym(RTLD_DEFAULT, "AuthorizationExecuteWithPrivileges") else {
-        printOS("Failed to find AuthorizationExecuteWithPrivileges")
         return (-1, "Failed to find AuthorizationExecuteWithPrivileges")
     }
     

@@ -26,7 +26,7 @@ public class LogStorage: ObservableObject {
     public init() {}
 
     public func addLog(_ message: String) {
-        updateOnMain {
+        DispatchQueue.main.async {
             self.logs.append(message)
             if self.logs.count > 50 {
                 self.logs.removeFirst(self.logs.count - 50) // Keep only the last 50 logs
@@ -35,24 +35,9 @@ public class LogStorage: ObservableObject {
     }
 
     public func clearLogs() {
-        updateOnMain {
+        DispatchQueue.main.async {
             self.logs.removeAll()
         }
-    }
-}
-
-public func printOS(_ items: Any..., separator: String = " ", category: String = LogCategory.general, logType: OSLogType = .error) {
-    let message = items.map { "\($0)" }.joined(separator: separator)
-    let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.alienator88.fallback", category: category)
-    logger.log(level: logType, "\(message, privacy: .public)")
-    Swift.print(message)
-    // Store the log message in memory if LogStorage is initialized
-    if LogStorage.shared != nil {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "[MMM d, h:mm:ss a]"
-        let timestamp = formatter.string(from: Date())
-        let datedMessage = "\(timestamp) \(message)"
-        LogStorage.shared.addLog(datedMessage)
     }
 }
 
@@ -81,7 +66,7 @@ public struct ConsoleView: View {
                             NSPasteboard.general.clearContents()
                             NSPasteboard.general.setString(allLogs, forType: .string)
                             showCopy = true
-                            updateOnMain(after: 2) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                                 showCopy = false
                             }
                         }) {
@@ -130,7 +115,7 @@ public struct ConsoleView: View {
                                     NSPasteboard.general.clearContents()
                                     NSPasteboard.general.setString(logStorage.logs[index], forType: .string)
                                     showCopy = true
-                                    updateOnMain(after: 2) {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                                         showCopy = false
                                     }
                                 }
