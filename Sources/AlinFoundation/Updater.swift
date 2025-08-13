@@ -16,6 +16,8 @@ public enum DefaultsKeys {
 }
 
 public class Updater: ObservableObject {
+    private let instanceID = UUID().uuidString.prefix(8)
+    
     @Published public var updateAvailable: Bool = false
     @Published public var sheet: Bool = false
     @Published public var releases: [Release] = []
@@ -23,7 +25,7 @@ public class Updater: ObservableObject {
     @Published public var progressBar: (String, Double) = ("", 0.0)
     @Published public var nextUpdateDate: Date {
         didSet {
-            UserDefaults.standard.set(nextUpdateDate.timeIntervalSinceReferenceDate, forKey: DefaultsKeys.nextUpdateDate)
+            saveNextUpdateDate()
         }
     }
 
@@ -41,7 +43,7 @@ public class Updater: ObservableObject {
     @Published var owner: String
     @Published var repo: String
     public var token: String = ""
-    private var updaterService: UpdaterService!
+    private var updaterService: UpdaterService?
     private var cancellables: Set<AnyCancellable> = []
     private let defaults = UserDefaults.standard
     public var tokenManager: TokenManager?
@@ -56,10 +58,15 @@ public class Updater: ObservableObject {
         }
     }
 
+    private var tokenValidationAttempted = false
+    private var isInitializingService = false
+
     public init(owner: String, repo: String, tokenEnabled: Bool = false, service: String? = nil, account: String? = nil) {
+        
         self.owner = owner
         self.repo = repo
 
+        // Initialize date and frequency settings...
         let storedInterval = defaults.double(forKey: DefaultsKeys.nextUpdateDate)
         if storedInterval != 0.0 {
             self.nextUpdateDate = Date(timeIntervalSinceReferenceDate: storedInterval)
@@ -74,36 +81,61 @@ public class Updater: ObservableObject {
             self.updateFrequency = .daily
         }
 
+        // Setup token manager if needed
         if tokenEnabled {
-            self.tokenManager = TokenManager(service: service ?? "\(Bundle.main.bundleId)", account: account ?? "GitHub-API-Token", repoUser: owner, repoName: repo)
-            loadToken()
+            setupTokenManager(service: service, account: account)
         } else {
             initializeUpdaterService()
         }
 
         ensureApplicationSupportFolderExists()
     }
+    
+    deinit {
+        printOS("💀 Updater DEINIT - Instance: \(instanceID)", category: LogCategory.updater)
+    }
 
-    private func loadToken() {
+    private func setupTokenManager(service: String?, account: String?) {
+        
+        let serviceName = service ?? (Bundle.main.bundleIdentifier ?? "AlinFoundation.Updater")
+        let accountName = account ?? "GitHub-API-Token"
+        
+        self.tokenManager = TokenManager(
+            service: serviceName,
+            account: accountName,
+            repoUser: owner,
+            repoName: repo
+        )
+        
+        loadAndValidateToken()
+    }
+
+    private func loadAndValidateToken() {
         tokenManager?.loadToken { [weak self] success, token in
-            guard let self = self else { return }
-            if success {
-                self.token = token
-                self.validateToken()
-            } else {
-                DispatchQueue.main.async {
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                if success {
+                    self.token = token
+                    self.validateTokenAndInitialize()
+                } else {
                     self.tokenManager?.setTokenValidity(false)
-                    self.initializeUpdaterService()
+                    self.initializeUpdaterService() // ← This should always be called
                 }
             }
         }
     }
 
-    private func validateToken() {
-
+    private func validateTokenAndInitialize() {
+        guard !tokenValidationAttempted else {
+            initializeUpdaterService()
+            return
+        }
+        
+        tokenValidationAttempted = true
         tokenManager?.checkTokenValidity(token: token) { [weak self] isValid in
-            guard let self = self else { return }
             DispatchQueue.main.async {
+                guard let self = self else { return }
                 self.tokenManager?.setTokenValidity(isValid)
                 self.initializeUpdaterService()
             }
@@ -111,26 +143,41 @@ public class Updater: ObservableObject {
     }
 
     private func initializeUpdaterService() {
-
+        if isInitializingService {
+            printOS("⚠️ Updater: Already initializing service, skipping", category: LogCategory.updater)
+            return
+        }
+        
+        isInitializingService = true
+        
         self.updaterService = UpdaterService(owner: owner, repo: repo, token: token)
-
-        updaterService.$releases
+        
+        // Safely unwrap updaterService for Combine assignments
+        guard let service = updaterService else {
+            printOS("Updater: Failed to create UpdaterService", category: LogCategory.updater)
+            isInitializingService = false
+            return
+        }
+        
+        service.$releases
             .assign(to: \.releases, on: self)
             .store(in: &cancellables)
 
-        updaterService.$updateAvailable
+        service.$updateAvailable
             .assign(to: \.updateAvailable, on: self)
             .store(in: &cancellables)
 
-        updaterService.$sheet
+        service.$sheet
             .assign(to: \.sheet, on: self)
             .store(in: &cancellables)
 
-        updaterService.$progressBar
+        service.$progressBar
             .assign(to: \.progressBar, on: self)
             .store(in: &cancellables)
 
-        updaterService.setUpdater(self)
+        service.setUpdater(self)
+
+        isInitializingService = false
 
         /// This will check for updates on load based on the update frequency
         self.checkAndUpdateIfNeeded()
@@ -140,25 +187,50 @@ public class Updater: ObservableObject {
     }
 
     public func checkForUpdates(sheet: Bool = false, force: Bool = false) {
-        guard updateFrequency != .none else { // Disable so no badge check happens when set to Never frequency
+        guard updateFrequency != .none || force else { // Disable so no badge check happens when set to Never frequency. Allow forced check.
             printOS("Updater: frequency set to never, skipping badge update check", category: LogCategory.updater)
             return
         }
-
-        updaterService.loadGithubReleases(sheet: sheet, force: force)
+        
+        // Remove this problematic guard - service should always be initialized by now
+        // guard let service = updaterService else {
+        //     printOS("Updater: UpdaterService not initialized, initializing now...", category: LogCategory.updater)
+        //     initializeUpdaterService()
+        //     return
+        // }
+        
+        guard let service = updaterService else {
+            printOS("Updater: UpdaterService not initialized - this shouldn't happen", category: LogCategory.updater)
+            return
+        }
+        
+        service.loadGithubReleases(sheet: sheet, force: force)
 
     }
 
     public func checkReleaseNotes() {
-        updaterService.checkReleaseNotes()
+        guard let service = updaterService else {
+            printOS("Updater: UpdaterService not initialized for checkReleaseNotes", category: LogCategory.updater)
+            return
+        }
+        service.checkReleaseNotes()
     }
 
     public func downloadUpdate() {
-        updaterService.downloadUpdate()
+        guard let service = updaterService else {
+            printOS("Updater: UpdaterService not initialized for downloadUpdate", category: LogCategory.updater)
+            return
+        }
+        service.downloadUpdate()
     }
 
     public func getUpdateView() -> some View {
-        UpdateContentView(updaterService: updaterService)
+        if let service = updaterService {
+            return UpdateContentView(updaterService: service)
+        } else {
+            // Return a placeholder view if service isn't initialized
+            return UpdateContentView(updaterService: UpdaterService(owner: owner, repo: repo, token: token))
+        }
     }
 
 
@@ -182,23 +254,26 @@ public class Updater: ObservableObject {
     public func setNextUpdateDate() {
         let calendar = Calendar.current
         let now = Date()
-        //        let startOfToday = calendar.startOfDay(for: now)
 
         switch updateFrequency {
         case .daily:
-            self.nextUpdateDate = calendar.date(byAdding: .second, value: 1, to: now)! /// Check on every launch
-                                                                                       //            self.nextUpdateDate = calendar.date(byAdding: .day, value: 1, to: startOfToday)! /// Check only once per day
+            self.nextUpdateDate = calendar.date(byAdding: .second, value: 1, to: now) ?? Date() /// Check on every launch
         case .weekly:
-            self.nextUpdateDate = calendar.date(byAdding: .day, value: 7, to: now)!
+            self.nextUpdateDate = calendar.date(byAdding: .day, value: 7, to: now) ?? Date()
         case .monthly:
-            self.nextUpdateDate = calendar.date(byAdding: .month, value: 1, to: now)!
+            self.nextUpdateDate = calendar.date(byAdding: .month, value: 1, to: now) ?? Date()
         case .none:
             self.nextUpdateDate = .distantFuture
         }
 
+        // Ensure next update date is in the future
         if self.nextUpdateDate <= now {
-            self.nextUpdateDate = calendar.date(byAdding: .second, value: 1, to: now)!
+            self.nextUpdateDate = calendar.date(byAdding: .second, value: 1, to: now) ?? Date()
         }
+    }
+
+    private func saveNextUpdateDate() {
+        UserDefaults.standard.set(nextUpdateDate.timeIntervalSinceReferenceDate, forKey: DefaultsKeys.nextUpdateDate)
     }
 
     //MARK: Features
@@ -214,7 +289,11 @@ public class Updater: ObservableObject {
             return
         }
 
-        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/contents/announcements.json")!
+        guard let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/contents/announcements.json") else {
+            printOS("Updater: invalid announcement URL", category: LogCategory.updater)
+            return
+        }
+
         var request = makeRequest(url: url, token: token)
         request.setValue("application/vnd.github.VERSION.raw", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
@@ -226,7 +305,7 @@ public class Updater: ObservableObject {
                 return
             }
 
-            let bundleVersion = Bundle.main.version
+            let bundleVersion = currentVersion
 
             if let data = data {
                 if let result = self.parseAnnouncement(from: data, for: bundleVersion, force: force) {
@@ -250,22 +329,18 @@ public class Updater: ObservableObject {
 
     private func parseAnnouncement(from data: Data, for bundleVersion: String, force: Bool) -> (announcement: String, available: Bool)? {
         do {
-            let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-            if let jsonDict = jsonObject as? [String: String] {
-                if force {
-                    let sortedKeys = jsonDict.keys.sorted { $0 > $1 }
-                    let allAnnouncement = sortedKeys.compactMap { key -> String? in
-                        if let announcementText = jsonDict[key] {
-                            return "\(key)\n\n\(announcementText)"
-                        }
-                        return nil
-                    }.joined(separator: "\n\n\n")
-                    return (allAnnouncement.announcementFormat(), true)
-                } else if let announcementText = jsonDict[bundleVersion] {
-                    return ("v\(bundleVersion)\n\n\(announcementText)".announcementFormat(), true)
-                } else {
-                    return ("No announcement available for this version.".announcementFormat(), false)
-                }
+            guard let jsonDict = try JSONSerialization.jsonObject(with: data) as? [String: String] else {
+                return ("No announcement available for this version.".announcementFormat(), false)
+            }
+
+            if force {
+                let sortedAnnouncements = jsonDict
+                    .sorted { $0.key > $1.key }
+                    .map { "\($0.key)\n\n\($0.value)" }
+                    .joined(separator: "\n\n\n")
+                return (sortedAnnouncements.announcementFormat(), true)
+            } else if let announcementText = jsonDict[bundleVersion] {
+                return ("v\(bundleVersion)\n\n\(announcementText)".announcementFormat(), true)
             } else {
                 return ("No announcement available for this version.".announcementFormat(), false)
             }
@@ -279,7 +354,8 @@ public class Updater: ObservableObject {
     }
 
     public func markAnnouncementAsViewed() {
-        if let bundleVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+        let bundleVersion = currentVersion
+        if !bundleVersion.isEmpty {
             lastViewedVersion = bundleVersion
             announcementAvailable = false
         }

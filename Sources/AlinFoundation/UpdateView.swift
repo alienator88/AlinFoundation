@@ -297,13 +297,15 @@ public struct RecentReleasesView: View {
                                         .padding()
                                         .multilineTextAlignment(.leading)
                                         .textSelection(.disabled)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                                    ReleaseImagesView(markdown: release.body)
                                 } else {
                                     Text("Failed to display release notes")
                                         .font(.body)
                                         .foregroundColor(.red)
                                         .padding(10)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
                                 }
                             }
                         }
@@ -335,56 +337,6 @@ public struct RecentReleasesView: View {
                     .padding(5)
             }
 
-        }
-    }
-}
-
-struct ReleaseImagesView: View {
-    @StateObject private var collector = ImageURLCollector()
-    let markdown: String
-
-    var body: some View {
-        VStack {
-            ForEach(collector.urls, id: \.self) { resolvedURL in
-                AsyncImage(url: resolvedURL) { phase in
-                    switch phase {
-                    case .empty:
-                        EmptyView()
-                    case .success(let image):
-                        image.resizable()
-                            .scaledToFit()
-                            .cornerRadius(8)
-                    case .failure(let error):
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 30, height: 30)
-                            Text("Failed to load image, click to open")
-                                .font(.caption)
-                        }
-                        .padding(.horizontal, 20)
-                        .onTapGesture {
-                            NSWorkspace.shared.open(resolvedURL)
-                        }
-                        .onAppear {
-//                            printOS("❌ Failed to load image: \(resolvedURL)")
-                            if let error = error as? URLError {
-                                printOS("URLError: \(error.code.rawValue) — \(error.localizedDescription)")
-                            }
-//                            else {
-//                                printOS("Error: \(String(describing: error))")
-//                            }
-                        }
-                    @unknown default:
-                        EmptyView()
-                    }
-                }
-            }
-        }
-        .onAppear {
-            collector.reset()
-            collector.collect(from: markdown)
         }
     }
 }

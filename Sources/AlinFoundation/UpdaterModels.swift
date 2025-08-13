@@ -26,38 +26,13 @@ public struct Release: Codable, Identifiable {
     public static let issueRegex: NSRegularExpression? = try? NSRegularExpression(pattern: "#(\\d+)")
 
     public func modifiedBody(owner: String, repo: String) -> NSAttributedString? {
+        // Remove image markdown patterns entirely
         let pattern = #"!\[.*?\]\((.*?)\)"#
-        let regex = try? NSRegularExpression(pattern: pattern)
-        var resolvedURLs: [URL] = []
-
-        if let regex = regex {
-            let matches = regex.matches(in: body, range: NSRange(body.startIndex..., in: body))
-            for match in matches {
-                if let range = Range(match.range(at: 1), in: body),
-                   let initialURL = URL(string: String(body[range])) {
-                    let semaphore = DispatchSemaphore(value: 0)
-                    let session = URLSession(configuration: .default, delegate: nil, delegateQueue: nil)
-                    var finalURL: URL?
-                    let task = session.dataTask(with: initialURL) { _, response, _ in
-                        finalURL = response?.url
-                        semaphore.signal()
-                    }
-                    task.resume()
-                    semaphore.wait()
-                    if let finalURL = finalURL {
-                        resolvedURLs.append(finalURL)
-                    }
-                }
-            }
-        }
-
-        ImageURLCollector.shared.urls = resolvedURLs
-
         let cleanedBody = body.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
         let lines = cleanedBody.components(separatedBy: .newlines)
-
+        
         let result = NSMutableAttributedString()
-
+        
         for line in lines {
             if !line.isEmpty {
                 let attributedLine = handlePattern(line: line, owner: owner, repo: repo)
@@ -65,7 +40,7 @@ public struct Release: Codable, Identifiable {
                 result.append(NSAttributedString(string: "\n"))
             }
         }
-
+        
         return result
     }
 
@@ -137,7 +112,6 @@ extension NSMutableAttributedString {
 
 // Sheet update release notes view for single update
 struct SingleReleaseNotesView: View {
-    @StateObject private var collector = ImageURLCollector()
     let release: Release?
     let owner: String
     let repo: String
@@ -151,49 +125,16 @@ struct SingleReleaseNotesView: View {
                         .font(.body)
                         .multilineTextAlignment(.leading)
                         .textSelection(.disabled)
-
-                    ReleaseImagesView(markdown: release.body)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(width: .infinity)
                 .padding()
-                .onAppear {
-                    collector.reset()
-                    collector.collect(from: release.body)
-                }
             } else {
                 Text("No release information")
                     .font(.body)
                     .multilineTextAlignment(.leading)
                     .padding(20)
-            }
-        }
-    }
-}
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-class ImageURLCollector: ObservableObject {
-    static let shared = ImageURLCollector()
-    @Published var urls: [URL] = []
-
-    func reset() {
-        urls = []
-    }
-
-    func collect(from markdown: String) {
-        let pattern = #"!\[.*?\]\((.*?)\)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return }
-
-        let matches = regex.matches(in: markdown, range: NSRange(markdown.startIndex..., in: markdown))
-
-        for match in matches {
-            if let range = Range(match.range(at: 1), in: markdown),
-               let initialURL = URL(string: String(markdown[range])) {
-                Task {
-                    if let resolvedURL = await initialURL.resolvedRedirect() {
-                        DispatchQueue.main.async {
-                            self.urls.append(resolvedURL)
-                        }
-                    }
-                }
             }
         }
     }
@@ -236,35 +177,5 @@ public enum UpdateFrequency: String, CaseIterable, Identifiable {
         guard let updateInterval = self.interval else { return }
         let newUpdateDate = Calendar.current.startOfDay(for: Date().addingTimeInterval(updateInterval))
         UserDefaults.standard.set(newUpdateDate.timeIntervalSinceReferenceDate, forKey: DefaultsKeys.nextUpdateDate)
-    }
-}
-
-//MARK: https://jonathandionne.com/posts/swift-snippet-url-resolver/
-extension URL {
-    func resolvedRedirect() async -> URL? {
-        await withCheckedContinuation { continuation in
-            var request = URLRequest(url: self)
-            request.httpMethod = "HEAD"
-            request.setValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
-            request.setValue("*/*", forHTTPHeaderField: "Accept")
-            request.setValue("gzip, deflate, br", forHTTPHeaderField: "Accept-Encoding")
-            request.setValue("keep-alive", forHTTPHeaderField: "Connection")
-            request.setValue(self.host, forHTTPHeaderField: "Host")
-
-            let task = URLSession.shared.dataTask(with: request) { _, response, error in
-                guard let httpResponse = response as? HTTPURLResponse, error == nil else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-
-                if let location = httpResponse.value(forHTTPHeaderField: "Location"),
-                   let redirectedURL = URL(string: location) {
-                    continuation.resume(returning: redirectedURL)
-                } else {
-                    continuation.resume(returning: httpResponse.url)
-                }
-            }
-            task.resume()
-        }
     }
 }

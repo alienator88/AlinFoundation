@@ -9,7 +9,6 @@ import Foundation
 import SwiftUI
 
 public class TokenManager: ObservableObject {
-
     private let service: String
     private let account: String
     private let repoUser: String
@@ -21,6 +20,7 @@ public class TokenManager: ObservableObject {
     public init(service: String, account: String? = nil, repoUser: String? = nil, repoName: String? = nil) {
         self.service = service
         self.account = account ?? NSFullUserName()
+        
         self.repoUser = repoUser ?? ""
         self.repoName = repoName ?? ""
         self.repoURL = "https://api.github.com/repos/\(repoUser ?? "")/\(repoName ?? "")"
@@ -81,10 +81,12 @@ public class TokenManager: ObservableObject {
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query, &result)
+        
         if status == noErr, let data = result as? Data, let token = String(data: data, encoding: .utf8) {
             completion(true, token)
         } else {
-            printOS("Error retrieving token from Keychain: \(status)")
+            printOS("🔑 FAILED: Error retrieving token from Keychain: \(status)", category: LogCategory.updater)
+            printOS("🔑 Common error codes: -25300=notFound, -25308=duplicateItem, -34018=missingEntitlement", category: LogCategory.updater)
             completion(false, "")
         }
     }

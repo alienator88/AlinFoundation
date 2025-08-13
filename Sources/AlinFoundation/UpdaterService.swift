@@ -31,59 +31,36 @@ class UpdaterService: ObservableObject {
         self.updater = updater
     }
 
+
+
     func checkReleaseNotes() {
-        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
-        var request = makeRequest(url: url, token: token)
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            guard let self = self, let data = data else { return }
-
-            if handleGitHubResponseErrors(response: response, error: error) {
-                return
-            }
-
-            if let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) {
-                DispatchQueue.main.async {
-                    self.releases = Array(decodedResponse.prefix(3))
-                }
-            }
-        }.resume()
+        fetchReleases { [weak self] releases in
+            self?.releases = releases
+        }
     }
 
     func loadGithubReleases(sheet: Bool, force: Bool = false) {
-        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
-        var request = makeRequest(url: url, token: token)
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+        fetchReleases { [weak self] releases in
             guard let self = self else { return }
-            if handleGitHubResponseErrors(response: response, error: error) {
-                return
-            }
-            guard let data = data else { return }
-            if let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) {
-                DispatchQueue.main.async {
-                    self.releases = Array(decodedResponse.prefix(3))
-                    self.checkForUpdate(sheet: sheet, force: force)
-                }
-            }
-        }.resume()
+            self.releases = releases
+            self.checkForUpdate(sheet: sheet, force: force)
+        }
     }
 
     private func checkForUpdate(sheet: Bool, force: Bool = false) {
         guard let latestRelease = releases.first else { return }
-        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
+        let currentVersion = updater?.currentVersion ?? "0.0.0"
 
         updateAvailable = latestRelease.tagName > currentVersion
 
         // Set the sheet behavior
         DispatchQueue.main.async() {
-            if sheet && self.updateAvailable { // Update available and show sheet is ON
+            if sheet {
                 self.sheet = true
-            } else if sheet && (!self.updateAvailable && force) { // No update + force and show sheet is ON
-                self.force = true
-                self.sheet = true
-            } else if sheet && (!self.updateAvailable && !force) { // No update + no force and show sheet is ON
-                self.sheet = true
-            } else { // Show sheet is OFF
+                self.force = force && !self.updateAvailable
+            } else {
                 self.sheet = false
+                self.force = false
             }
         }
 
@@ -210,6 +187,28 @@ class UpdaterService: ObservableObject {
             }
 
         }
+    }
+
+    private func fetchReleases(completion: @escaping ([Release]) -> Void) {
+        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases")!
+        var request = makeRequest(url: url, token: token)
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self else { return }
+
+            if handleGitHubResponseErrors(response: response, error: error) {
+                return
+            }
+
+            guard let data = data,
+                  let decodedResponse = try? JSONDecoder().decode([Release].self, from: data) else {
+                return
+            }
+
+            let releases = Array(decodedResponse.prefix(3))
+            DispatchQueue.main.async {
+                completion(releases)
+            }
+        }.resume()
     }
 }
 
