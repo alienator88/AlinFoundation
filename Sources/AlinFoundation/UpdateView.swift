@@ -14,7 +14,7 @@ struct UpdateContentView: View {
 
     var body: some View {
         Group {
-            if updaterService.updateAvailable || updaterService.force {
+            if updaterService.updateAvailable {
                 UpdateView(updaterService: updaterService)
                     .edgesIgnoringSafeArea(.all)
                     .material(.hudWindow)
