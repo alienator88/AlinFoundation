@@ -14,6 +14,7 @@ class UpdaterService: ObservableObject {
     @Published var updateAvailable: Bool = false
     @Published var sheet: Bool = false
     @Published var force: Bool = false
+    @Published var forceUpdate: Bool = false
     @Published var progressBar: (String, Double) = ("", 0.0)
     weak var updater: Updater?
 
@@ -39,15 +40,15 @@ class UpdaterService: ObservableObject {
         }
     }
 
-    func loadGithubReleases(sheet: Bool, force: Bool = false) {
+    func loadGithubReleases(sheet: Bool, force: Bool = false, forceUpdate: Bool = false) {
         fetchReleases { [weak self] releases in
             guard let self = self else { return }
             self.releases = releases
-            self.checkForUpdate(sheet: sheet, force: force)
+            self.checkForUpdate(sheet: sheet, force: force, forceUpdate: forceUpdate)
         }
     }
 
-    private func checkForUpdate(sheet: Bool, force: Bool = false) {
+    private func checkForUpdate(sheet: Bool, force: Bool = false, forceUpdate: Bool = false) {
         guard let latestRelease = releases.first else { return }
         let currentVersion = updater?.currentVersion ?? "0.0.0"
 
@@ -58,9 +59,11 @@ class UpdaterService: ObservableObject {
             if sheet {
                 self.sheet = true
                 self.force = force && !self.updateAvailable
+                self.forceUpdate = forceUpdate
             } else {
                 self.sheet = false
                 self.force = false
+                self.forceUpdate = false
             }
         }
 

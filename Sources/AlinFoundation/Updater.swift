@@ -186,8 +186,8 @@ public class Updater: ObservableObject {
         self.checkForAnnouncement()
     }
 
-    public func checkForUpdates(sheet: Bool = false, force: Bool = false) {
-        guard updateFrequency != .none || force else { // Disable so no badge check happens when set to Never frequency. Allow forced check.
+    public func checkForUpdates(sheet: Bool = false, force: Bool = false, forceUpdate: Bool = false) {
+        guard updateFrequency != .none || force || forceUpdate else {
             printOS("Updater: frequency set to never, skipping badge update check", category: LogCategory.updater)
             return
         }
@@ -204,7 +204,7 @@ public class Updater: ObservableObject {
             return
         }
         
-        service.loadGithubReleases(sheet: sheet, force: force)
+        service.loadGithubReleases(sheet: sheet, force: force, forceUpdate: forceUpdate)
 
     }
 
