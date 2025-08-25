@@ -422,7 +422,7 @@ public struct UpdateBadge: View {
 
         if updater.releases.first?.name.lowercased() != "ignore" {
             AlertNotification(
-                label: updater.updateFrequency == .none ? "Updates Disabled".localized() : (updater.updateAvailable ? "Update Available".localized() : "No Updates".localized()),
+                label: updater.updateFrequency == .none ? "Updates Disabled" : (updater.updateAvailable ? "Update Available" : "No Updates"),
                 icon: "arrow.down.app",
                 buttonAction: {
                     showUpdateView = true
@@ -566,7 +566,7 @@ public struct FeatureBadge: View {
     }
 
     public var body: some View {
-        AlertNotification(label: updater.announcementAvailable ? "New Announcement".localized() : "No New Announcement".localized(), icon: "star", buttonAction: {
+        AlertNotification(label: updater.announcementAvailable ? "New Announcement" : "No New Announcement", icon: "star", buttonAction: {
             showFeatureView = true
         }, btnColor: Color.blue, hideLabel: hideLabel)
         .sheet(isPresented: $showFeatureView, content: {

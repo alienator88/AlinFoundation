@@ -37,7 +37,7 @@ public struct SimpleButtonStyle: ButtonStyle {
                 .resizable()
                 .scaledToFit()
                 .frame(width: size, height: size)
-//                .scaleEffect(hovered ? 1.05 : 1.0)
+            //                .scaleEffect(hovered ? 1.05 : 1.0)
                 .rotationEffect(.degrees(rotate ? (hovered ? 90 : 0) : 0))
                 .animation(.easeInOut(duration: 0.2), value: hovered)
             if !label.isEmpty {
@@ -154,7 +154,7 @@ public struct InfoButton: View {
                 if let extraView = extraView {
                     extraView
                 }
-                
+
                 Spacer()
             }
             .padding()
@@ -323,7 +323,7 @@ public struct AlertNotification: View {
     var disabled: Bool = false
     var hideLabel: Bool = false
 
-//    @ObservedObject var themeManager: ThemeManager
+    //    @ObservedObject var themeManager: ThemeManager
     @State private var hovered = false
     @Environment(\.colorScheme) var colorScheme // Access the current color scheme
 
@@ -339,7 +339,7 @@ public struct AlertNotification: View {
     public var body: some View {
         HStack {
             if !hideLabel {
-                Text(label)
+                Text(LocalizedStringKey(label))
                     .font(.title3)
                     .foregroundStyle(colorScheme == .dark ? .white : .black)
                     .opacity(0.5)
@@ -354,8 +354,9 @@ public struct AlertNotification: View {
                     .scaledToFit()
                     .frame(width: 14, height: 14)
                     .foregroundStyle(.white)
-                Text(hideLabel ? label : "View")
-                    .foregroundStyle(.white)
+                hideLabel ? Text(LocalizedStringKey(label)).foregroundStyle(.white)
+                : Text(LocalizedStringKey("View")).foregroundStyle(.white)
+
             }
             .padding(3)
             .buttonStyle(PlainButtonStyle())

@@ -186,7 +186,7 @@ public struct PermissionsBadge: View {
         Group {
             if !permissionManager.allPermissionsGranted {
 
-                AlertNotification(label: "Missing Permissions".localized(), icon: "lock", buttonAction: {
+                AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
                     showPermissionList = true
                 }, btnColor: Color.red, hideLabel: hideLabel)
                 .sheet(isPresented: $showPermissionList) {
@@ -209,7 +209,7 @@ public struct PermissionsListView: View {
         VStack(alignment: .center, spacing: 10) {
             HStack {
                 Spacer()
-                Text("Permission Status")
+                Text(LocalizedStringKey("Permission Status"))
                     .font(.title2)
                 Spacer()
             }
@@ -223,8 +223,10 @@ public struct PermissionsListView: View {
                             .foregroundColor(results.grantedPermissions.contains(permission) ? .green : .red)
                         Text(permissionName(for: permission))
                         Spacer()
-                        Button("View") {
+                        Button {
                             openSettingsForPermission(permission)
+                        } label: {
+                            Text(LocalizedStringKey("View"))
                         }
                     }
                     .padding(5)
@@ -233,7 +235,7 @@ public struct PermissionsListView: View {
 
             Divider()
 
-            Text("Restart \(Bundle.main.name) for changes to take effect").font(.footnote).opacity(0.5)
+            Text(LocalizedStringKey("Restart \(Bundle.main.name) for changes to take effect")).font(.footnote).opacity(0.5)
 
             HStack {
                 Button("Restart") {
