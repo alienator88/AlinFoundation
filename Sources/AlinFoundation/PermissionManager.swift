@@ -186,7 +186,7 @@ public struct PermissionsBadge: View {
         Group {
             if !permissionManager.allPermissionsGranted {
 
-                AlertNotification(label: "Missing Permissions", icon: "lock", buttonAction: {
+                AlertNotification(label: String(localized:"Missing Permissions"), icon: "lock", buttonAction: {
                     showPermissionList = true
                 }, btnColor: Color.red, hideLabel: hideLabel)
                 .sheet(isPresented: $showPermissionList) {
@@ -235,7 +235,7 @@ public struct PermissionsListView: View {
 
             Divider()
 
-            Text(LocalizedStringKey("Restart \(Bundle.main.name) for changes to take effect")).font(.footnote).opacity(0.5)
+            Text("Restart \(Bundle.main.name) for changes to take effect").font(.footnote).opacity(0.5)
 
             HStack {
                 Button("Restart") {

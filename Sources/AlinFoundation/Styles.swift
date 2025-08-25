@@ -339,7 +339,7 @@ public struct AlertNotification: View {
     public var body: some View {
         HStack {
             if !hideLabel {
-                Text(LocalizedStringKey(label))
+                Text(label)
                     .font(.title3)
                     .foregroundStyle(colorScheme == .dark ? .white : .black)
                     .opacity(0.5)
@@ -354,9 +354,8 @@ public struct AlertNotification: View {
                     .scaledToFit()
                     .frame(width: 14, height: 14)
                     .foregroundStyle(.white)
-                hideLabel ? Text(LocalizedStringKey(label)).foregroundStyle(.white)
-                : Text(LocalizedStringKey("View")).foregroundStyle(.white)
-
+                Text(hideLabel ? label : String(localized: "View"))
+                    .foregroundStyle(.white)
             }
             .padding(3)
             .buttonStyle(PlainButtonStyle())
