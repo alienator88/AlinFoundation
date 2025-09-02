@@ -106,20 +106,18 @@ public struct ConsoleView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 } else {
                     List(logStorage.logs.indices.reversed(), id: \.self) { index in
-                        HStack {
-                            Text(logStorage.logs[index])
-                                .font(.system(size: 12, weight: .regular, design: .monospaced))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(5)
-                                .onTapGesture {
-                                    NSPasteboard.general.clearContents()
-                                    NSPasteboard.general.setString(logStorage.logs[index], forType: .string)
-                                    showCopy = true
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                        showCopy = false
-                                    }
+                        Text(logStorage.logs[index])
+                            .font(.system(size: 12, weight: .regular, design: .monospaced))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(5)
+                            .onTapGesture {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(logStorage.logs[index], forType: .string)
+                                showCopy = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    showCopy = false
                                 }
-                        }
+                            }
 
                     }
                     .cornerRadius(8)
