@@ -99,10 +99,33 @@ class UpdaterService: ObservableObject {
         self.progressBar.0 = "Update in progress".localized()
         self.progressBar.1 = 0.1
 
-        guard let latestRelease = self.releases.first,
-              let asset = latestRelease.assets.first(where: { $0.name.hasSuffix(".zip") }),
-              let url = URL(string: asset.url) else { return }
-
+        guard let latestRelease = self.releases.first else {
+            DispatchQueue.main.async {
+                self.progressBar.0 = "No releases available".localized()
+                self.progressBar.1 = 0.0
+            }
+            return
+        }
+        
+        guard let asset = selectAppropriateAsset(from: latestRelease.assets) else {
+            DispatchQueue.main.async {
+                self.progressBar.0 = "No downloadable update found".localized()
+                self.progressBar.1 = 0.0
+            }
+            return
+        }
+        
+        guard let url = URL(string: asset.url) else {
+            DispatchQueue.main.async {
+                self.progressBar.0 = "Invalid download URL".localized()
+                self.progressBar.1 = 0.0
+            }
+            return
+        }
+        DispatchQueue.main.async {
+            self.progressBar.1 = 0.2
+        }
+        
         var request = makeRequest(url: url, token: token)
         request.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
 
@@ -116,11 +139,15 @@ class UpdaterService: ObservableObject {
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data, error == nil else {
                 printOS("Error fetching asset: \(error?.localizedDescription ?? "Unknown error")", category: LogCategory.updater)
+                DispatchQueue.main.async {
+                    self.progressBar.0 = "Download failed".localized()
+                    self.progressBar.1 = 0.0
+                }
                 return
             }
 
             DispatchQueue.main.async {
-                self.progressBar.1 = 0.2
+                self.progressBar.1 = 0.3
             }
 
             do {
@@ -138,10 +165,41 @@ class UpdaterService: ObservableObject {
 
             } catch {
                 printOS("Error saving downloaded file: \(error.localizedDescription)", category: LogCategory.updater)
+                DispatchQueue.main.async {
+                    self.progressBar.0 = "Failed to save update".localized()
+                    self.progressBar.1 = 0.0
+                }
             }
         }
 
         task.resume()
+    }
+
+    private func selectAppropriateAsset(from assets: [Asset]) -> Asset? {
+        let currentArch = isOSArm() ? "arm" : "intel"
+        let appName = Bundle.main.name
+
+        let zipAssets = assets.filter { asset in
+            asset.name.hasSuffix(".zip") && !asset.name.hasSuffix(".dmg")
+        }
+
+        let archSpecificAsset = zipAssets.first { asset in
+            asset.name.contains("\(appName)-\(currentArch).zip")
+        }
+
+        if let archAsset = archSpecificAsset {
+            return archAsset
+        }
+
+        let genericAsset = zipAssets.first { asset in
+            asset.name == "\(appName).zip"
+        }
+
+        if let generic = genericAsset {
+            return generic
+        }
+        
+        return zipAssets.first
     }
 
     private func unzipAndReplace(downloadedFileURL fileURL: String) {
@@ -175,18 +233,23 @@ class UpdaterService: ObservableObject {
         } catch {
             printOS("Error replacing the app: \(error)", category: LogCategory.updater)
 
+            DispatchQueue.main.async {
+                self.progressBar.1 = 0.9
+            }
+            
             let command = "rm -rf \\\"\(appBundle)\\\" && ditto -xk \\\"\(fileURL)\\\" \\\"\(appDirectory)\\\" && rm -f \\\"\(fileURL)\\\""
             let (success, output) = runOSACommand(command)
 
-            if success {
-                DispatchQueue.main.async {
+            DispatchQueue.main.async {
+                if success {
                     self.progressBar.0 = "Update completed".localized()
                     self.progressBar.1 = 1.0
                     self.updater?.setNextUpdateDate()
+                } else {
+                    printOS("Updater OSA failed: \(output)", category: LogCategory.updater)
+                    self.progressBar.0 = "Update failed - check permissions".localized()
+                    self.progressBar.1 = 0.0
                 }
-            } else {
-                printOS("Updater OSA failed: \(output)", category: LogCategory.updater)
-                self.progressBar.0 = "Failed to update, check debug logs".localized()
             }
 
         }
