@@ -188,16 +188,9 @@ public class Updater: ObservableObject {
 
     public func checkForUpdates(sheet: Bool = false, force: Bool = false, forceUpdate: Bool = false) {
         guard updateFrequency != .none || force || forceUpdate else {
-            printOS("Updater: frequency set to never, skipping badge update check", category: LogCategory.updater)
+//            printOS("Updater: frequency set to never, skipping badge update check", category: LogCategory.updater)
             return
         }
-        
-        // Remove this problematic guard - service should always be initialized by now
-        // guard let service = updaterService else {
-        //     printOS("Updater: UpdaterService not initialized, initializing now...", category: LogCategory.updater)
-        //     initializeUpdaterService()
-        //     return
-        // }
         
         guard let service = updaterService else {
             printOS("Updater: UpdaterService not initialized - this shouldn't happen", category: LogCategory.updater)
@@ -236,7 +229,7 @@ public class Updater: ObservableObject {
 
     public func checkAndUpdateIfNeeded() {
         guard updateFrequency != .none else {
-            printOS("Updater: frequency set to never, skipping update check", category: LogCategory.updater)
+//            printOS("Updater: frequency set to never, skipping update check", category: LogCategory.updater)
             return
         }
 
@@ -280,7 +273,7 @@ public class Updater: ObservableObject {
     public func checkForAnnouncement(force: Bool = false) {
 
         guard updateFrequency != .none || force else {
-            printOS("Updater: frequency set to never, skipping announcement check", category: LogCategory.updater)
+//            printOS("Updater: frequency set to never, skipping announcement check", category: LogCategory.updater)
             return
         }
 
