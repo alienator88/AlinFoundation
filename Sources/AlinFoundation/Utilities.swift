@@ -284,7 +284,7 @@ public func isCurrentUserAdmin(completion: @escaping (Bool) -> Void) {
 
 
 // Get size of files
-public func totalSizeOnDisk(for paths: [URL]) -> (real: Int64, logical: Int64) {
+public func totalSize(for paths: [URL]) -> (real: Int64, logical: Int64) {
     let fileManager = FileManager.default
     var totalAllocatedSize: Int64 = 0
     var totalFileSize: Int64 = 0
@@ -332,8 +332,8 @@ public func totalSizeOnDisk(for paths: [URL]) -> (real: Int64, logical: Int64) {
 
 
 
-public func totalSizeOnDisk(for path: URL) -> (real: Int64, logical: Int64) {
-    return totalSizeOnDisk(for: [path])
+public func totalSize(for path: URL) -> (real: Int64, logical: Int64) {
+    return totalSize(for: [path])
 }
 
 // ByteFormatter
