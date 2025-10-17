@@ -43,6 +43,11 @@ public class WindowManager {
 
         // Apply toolbar style if specified
         if let toolbarStyle = toolbarStyle {
+            // Create an empty toolbar (required for toolbarStyle to work on macOS 13.0)
+            let toolbar = NSToolbar(identifier: "window-\(id)")
+            toolbar.displayMode = .iconOnly
+            toolbar.showsBaselineSeparator = false
+            newWindow.toolbar = toolbar
             newWindow.toolbarStyle = toolbarStyle
         }
 
