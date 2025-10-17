@@ -14,7 +14,7 @@ public class WindowManager {
     public init() {}
 
     // Open a new window with the specified SwiftUI view and optional size
-    public func open<Content: View>(id: String = "window", with view: Content, width: CGFloat = 400, height: CGFloat = 300, material: NSVisualEffectView.Material? = nil) {
+    public func open<Content: View>(id: String = "window", with view: Content, width: CGFloat = 400, height: CGFloat = 300, material: NSVisualEffectView.Material? = nil, resizable: Bool = true, toolbarStyle: NSWindow.ToolbarStyle? = nil) {
         // Show current open if already open
         if let existingWindow = windows[id], existingWindow.isVisible {
             existingWindow.makeKeyAndOrderFront(nil)
@@ -30,11 +30,22 @@ public class WindowManager {
         let hostingController = NSHostingController(rootView: view)
         let newWindow = NSWindow(contentViewController: hostingController)
         newWindow.setContentSize(NSSize(width: width, height: height))
-        newWindow.styleMask = [.titled, .closable, .fullSizeContentView]
+        var styleMask: NSWindow.StyleMask = [.titled, .closable, .fullSizeContentView]
+        if resizable {
+            styleMask.insert(.resizable)
+            styleMask.insert(.miniaturizable)
+        }
+        newWindow.styleMask = styleMask
         newWindow.titlebarAppearsTransparent = true
         newWindow.titleVisibility = .hidden
         newWindow.level = .normal
         newWindow.isReleasedWhenClosed = false
+
+        // Apply toolbar style if specified
+        if let toolbarStyle = toolbarStyle {
+            newWindow.toolbarStyle = toolbarStyle
+        }
+
         newWindow.center()
 
         if let material = material {
