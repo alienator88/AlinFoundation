@@ -15,16 +15,12 @@ public class WindowManager {
 
     // Open a new window with the specified SwiftUI view and optional size
     public func open<Content: View>(id: String = "window", with view: Content, width: CGFloat = 400, height: CGFloat = 300, material: NSVisualEffectView.Material? = nil, resizable: Bool = true, toolbarStyle: NSWindow.ToolbarStyle? = nil, center: Bool = false) {
-        // Show current open if already open
-        if let existingWindow = windows[id], existingWindow.isVisible {
+        // If window already exists (visible or hidden), reuse it
+        if let existingWindow = windows[id] {
             existingWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-
-        // Close and nil out existing window
-        windows[id]?.close()
-        windows[id] = nil
 
         // Create a new window
         let hostingController = NSHostingController(rootView: view)
@@ -69,8 +65,14 @@ public class WindowManager {
         windows[id] = newWindow
     }
 
-    // Close the window if it exists
+    // Hide the window (keeps instance alive for reuse)
     public func close(id: String = "window") {
+        windows[id]?.orderOut(nil)
+        // Don't nil out - keep window reference for reuse
+    }
+
+    // Force close and destroy the window (rarely needed)
+    public func forceClose(id: String = "window") {
         windows[id]?.close()
         windows[id] = nil
     }
