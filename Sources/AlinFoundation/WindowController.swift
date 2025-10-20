@@ -52,10 +52,9 @@ public class WindowManager {
         }
 
         // Enable automatic frame (position + size) saving using the window id
-        newWindow.frameAutosaveName = id
-
-        // Try to restore saved frame from previous sessions
-        let didRestoreFrame = newWindow.setFrameUsingName(id)
+        // setFrameAutosaveName both sets the name AND restores saved frame if it exists
+        // Returns true if a saved frame was restored, false if first launch
+        let didRestoreFrame = newWindow.setFrameAutosaveName(id)
 
         // Only center if explicitly requested or if no saved frame exists (first launch)
         if center || !didRestoreFrame {
