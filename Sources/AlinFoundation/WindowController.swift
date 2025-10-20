@@ -14,14 +14,14 @@ public class WindowManager {
     public init() {}
 
     // Open a new window with the specified SwiftUI view and optional size
-    public func open<Content: View>(id: String = "window", with view: Content, width: CGFloat = 400, height: CGFloat = 300, material: NSVisualEffectView.Material? = nil, resizable: Bool = true, toolbarStyle: NSWindow.ToolbarStyle? = nil) {
+    public func open<Content: View>(id: String = "window", with view: Content, width: CGFloat = 400, height: CGFloat = 300, material: NSVisualEffectView.Material? = nil, resizable: Bool = true, toolbarStyle: NSWindow.ToolbarStyle? = nil, center: Bool = false) {
         // Show current open if already open
         if let existingWindow = windows[id], existingWindow.isVisible {
             existingWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        
+
         // Close and nil out existing window
         windows[id]?.close()
         windows[id] = nil
@@ -51,7 +51,16 @@ public class WindowManager {
             newWindow.toolbarStyle = toolbarStyle
         }
 
-        newWindow.center()
+        // Enable automatic frame (position + size) saving using the window id
+        newWindow.frameAutosaveName = id
+
+        // Try to restore saved frame from previous sessions
+        let didRestoreFrame = newWindow.setFrameUsingName(id)
+
+        // Only center if explicitly requested or if no saved frame exists (first launch)
+        if center || !didRestoreFrame {
+            newWindow.center()
+        }
 
         if let material = material {
             setVisualEffectBackground(for: newWindow, material: material)
