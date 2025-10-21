@@ -409,7 +409,6 @@ struct UpdateContentView: View {
 
 public struct UpdateBadge: View {
     @ObservedObject var updater: Updater
-    @State private var showUpdateView = false
     @State private var hovered = false
     var hideLabel: Bool
 
@@ -425,7 +424,7 @@ public struct UpdateBadge: View {
                 label: updater.updateFrequency == .none ? String(localized:"Updates Disabled") : (updater.updateAvailable ? String(localized:"Update Available") : String(localized:"No Updates")),
                 icon: "arrow.down.app",
                 buttonAction: {
-                    showUpdateView = true
+                    updater.sheet = true
                 },
                 btnColor: Color.green,
                 disabled: updater.updateFrequency == .none,
@@ -434,7 +433,7 @@ public struct UpdateBadge: View {
             .onAppear {
                 updater.checkForUpdates()
             }
-            .sheet(isPresented: $showUpdateView, content: {
+            .sheet(isPresented: $updater.sheet, content: {
                 updater.getUpdateView()
             })
         }
