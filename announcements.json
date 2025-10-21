@@ -1,17 +1,17 @@
 {
   "4.4.0": {
     "features": [
-      "• Privileged Helper Service: Description here",
-      "• Bug fixes and improvements"
+      "Privileged Helper Service: Description here",
+      "Bug fixes and improvements"
     ],
     "caveats": []
   },
   "1.0.4": {
     "features": [
-      "• Multilingual Support: Description here"
+      "Multilingual Support: Description here"
     ],
     "caveats": [
-      "• Warning"
+      "Warning"
     ]
   }
 }
