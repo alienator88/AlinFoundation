@@ -557,7 +557,6 @@ public struct RecentReleasesView: View {
 //MARK: Features
 public struct FeatureBadge: View {
     @ObservedObject var updater: Updater
-    @State private var showFeatureView = false
     var hideLabel: Bool
 
     public init(updater: Updater, hideLabel: Bool = false) {
@@ -567,9 +566,9 @@ public struct FeatureBadge: View {
 
     public var body: some View {
         AlertNotification(label: updater.announcementAvailable ? String(localized:"New Announcement") : String(localized:"No New Announcement"), icon: "star", buttonAction: {
-            showFeatureView = true
+            updater.showAnnouncementSheet = true
         }, btnColor: Color.blue, hideLabel: hideLabel)
-        .sheet(isPresented: $showFeatureView, content: {
+        .sheet(isPresented: $updater.showAnnouncementSheet, content: {
             updater.getAnnouncementView()
         })
     }
@@ -592,15 +591,60 @@ public struct FeatureView: View {
 
             Divider()
 
-            ScrollView() {
-                Text(updater.getAnnouncement())
-                    .font(.body)
-                    .multilineTextAlignment(.leading)
-                    .padding()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    if let entry = updater.getAnnouncementEntry() {
+                        // Version header
+                        Text("v\(updater.getAnnouncementVersion())")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+
+                        // Features Section
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(entry.features, id: \.self) { feature in
+                                HStack(alignment: .top, spacing: 8) {
+                                    Text("•")
+                                        .font(.body)
+                                    Text(feature)
+                                        .font(.body)
+                                        .multilineTextAlignment(.leading)
+                                }
+                            }
+                        }
+
+                        // Warnings Section (only if caveats exist)
+                        if let caveats = entry.caveats, !caveats.isEmpty {
+                            Divider()
+                                .padding(.vertical, 10)
+
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("⚠️ Warnings")
+                                    .font(.headline)
+                                    .foregroundColor(.orange)
+
+                                ForEach(caveats, id: \.self) { caveat in
+                                    HStack(alignment: .top, spacing: 8) {
+                                        Text("•")
+                                            .font(.body)
+                                        Text(caveat)
+                                            .font(.body)
+                                            .multilineTextAlignment(.leading)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Text("No announcement available")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
             }
             .frame(width: 500)
             .frame(maxHeight: 400)
-
 
             HStack(alignment: .center, spacing: 20) {
                 Button(action: {
@@ -614,6 +658,5 @@ public struct FeatureView: View {
         }
         .padding()
         .material(.hudWindow)
-
     }
 }

@@ -8,6 +8,11 @@
 import Foundation
 import SwiftUI
 
+public struct AnnouncementEntry: Codable {
+    let features: [String]
+    let caveats: [String]?
+}
+
 public struct Release: Codable, Identifiable {
     public let id: Int
     public let tagName: String

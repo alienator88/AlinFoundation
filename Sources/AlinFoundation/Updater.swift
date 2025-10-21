@@ -22,6 +22,7 @@ public class Updater: ObservableObject {
     @Published public var sheet: Bool = false
     @Published public var releases: [Release] = []
     @Published public var announcementAvailable: Bool = false
+    @Published public var showAnnouncementSheet: Bool = false
     @Published public var progressBar: (String, Double) = ("", 0.0)
     @Published public var nextUpdateDate: Date {
         didSet {
@@ -38,11 +39,13 @@ public class Updater: ObservableObject {
         }
     }
 
-    private var announcement: String = ""
+    private var announcementEntry: AnnouncementEntry?
+    private var currentAnnouncementVersion: String = ""
     private var announcementChecked = false
     @Published var owner: String
     @Published var repo: String
     public var token: String = ""
+    private let autoCheckAnnouncements: Bool
     private var updaterService: UpdaterService?
     private var cancellables: Set<AnyCancellable> = []
     private let defaults = UserDefaults.standard
@@ -61,10 +64,11 @@ public class Updater: ObservableObject {
     private var tokenValidationAttempted = false
     private var isInitializingService = false
 
-    public init(owner: String, repo: String, tokenEnabled: Bool = false, service: String? = nil, account: String? = nil) {
-        
+    public init(owner: String, repo: String, tokenEnabled: Bool = false, service: String? = nil, account: String? = nil, announcements: Bool = true) {
+
         self.owner = owner
         self.repo = repo
+        self.autoCheckAnnouncements = announcements
 
         // Initialize date and frequency settings...
         let storedInterval = defaults.double(forKey: DefaultsKeys.nextUpdateDate)
@@ -183,7 +187,9 @@ public class Updater: ObservableObject {
         self.checkAndUpdateIfNeeded()
 
         /// Get new features
-        self.checkForAnnouncement()
+        if autoCheckAnnouncements {
+            self.checkForAnnouncement()
+        }
     }
 
     public func checkForUpdates(sheet: Bool = false, force: Bool = false, forceUpdate: Bool = false) {
@@ -301,15 +307,22 @@ public class Updater: ObservableObject {
             let bundleVersion = currentVersion
 
             if let data = data {
-                if let result = self.parseAnnouncement(from: data, for: bundleVersion, force: force) {
+                if let result = self.parseAnnouncement(from: data, for: bundleVersion) {
                     DispatchQueue.main.async {
-                        self.announcement = result.announcement
+                        self.announcementEntry = result.entry
+                        self.currentAnnouncementVersion = result.version
                         self.announcementAvailable = force || (self.lastViewedVersion != bundleVersion) && result.available
+
+                        // Open sheet when forced (e.g., from reset button)
+                        if force {
+                            self.showAnnouncementSheet = true
+                        }
                     }
                 } else {
                     printOS("Updater: no announcement found or JSON in unexpected format", category: LogCategory.updater)
                     DispatchQueue.main.async {
-                        self.announcement = "No announcement available for this version.".announcementFormat()
+                        self.announcementEntry = AnnouncementEntry(features: ["No announcement available for this version."], caveats: nil)
+                        self.currentAnnouncementVersion = bundleVersion
                         self.announcementAvailable = false
                     }
                 }
@@ -320,22 +333,17 @@ public class Updater: ObservableObject {
     }
 
 
-    private func parseAnnouncement(from data: Data, for bundleVersion: String, force: Bool) -> (announcement: String, available: Bool)? {
+    private func parseAnnouncement(from data: Data, for bundleVersion: String) -> (entry: AnnouncementEntry, version: String, available: Bool)? {
         do {
-            guard let jsonDict = try JSONSerialization.jsonObject(with: data) as? [String: String] else {
-                return ("No announcement available for this version.".announcementFormat(), false)
-            }
+            let decoder = JSONDecoder()
+            let jsonDict = try decoder.decode([String: AnnouncementEntry].self, from: data)
 
-            if force {
-                let sortedAnnouncements = jsonDict
-                    .sorted { $0.key > $1.key }
-                    .map { "\($0.key)\n\n\($0.value)" }
-                    .joined(separator: "\n\n\n")
-                return (sortedAnnouncements.announcementFormat(), true)
-            } else if let announcementText = jsonDict[bundleVersion] {
-                return ("v\(bundleVersion)\n\n\(announcementText)".announcementFormat(), true)
+            // Try to get announcement for the specified version
+            if let entry = jsonDict[bundleVersion] {
+                return (entry, bundleVersion, true)
             } else {
-                return ("No announcement available for this version.".announcementFormat(), false)
+                let emptyEntry = AnnouncementEntry(features: ["No announcement available for this version."], caveats: nil)
+                return (emptyEntry, bundleVersion, false)
             }
         } catch {
             return nil
@@ -358,8 +366,21 @@ public class Updater: ObservableObject {
         checkForAnnouncement(force: true)
     }
 
+    public func getAnnouncementEntry() -> AnnouncementEntry? {
+        return announcementEntry
+    }
+
+    public func getAnnouncementVersion() -> String {
+        return currentAnnouncementVersion
+    }
+
     public func getAnnouncement() -> String {
-        return announcement
+        guard let entry = announcementEntry else {
+            return "No announcement available for this version."
+        }
+
+        let formattedFeatures = entry.features.map { "• \($0)" }.joined(separator: "\n\n")
+        return "v\(currentAnnouncementVersion)\n\n\(formattedFeatures)"
     }
 
 
