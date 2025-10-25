@@ -25,6 +25,15 @@ public class PermissionManager: ObservableObject {
         return results?.allCheckedPermissionsGranted ?? false
     }
 
+    /// Returns true when permission check is complete AND permissions are denied
+    /// Use this for UI warnings/badges to avoid showing false positives before check completes
+    public var shouldShowPermissionWarning: Bool {
+        guard let results = results else {
+            return false  // Don't show warning until check completes
+        }
+        return !results.allCheckedPermissionsGranted
+    }
+
     public enum PermissionType {
         case fullDiskAccess
         case accessibility
